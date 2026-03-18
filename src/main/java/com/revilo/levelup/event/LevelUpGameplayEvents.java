@@ -4,8 +4,9 @@ import com.revilo.levelup.LevelUpMod;
 import com.revilo.levelup.api.LevelUpApi;
 import com.revilo.levelup.api.LevelUpSources;
 import com.revilo.levelup.config.LevelUpConfig;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -39,14 +40,30 @@ public final class LevelUpGameplayEvents {
 
     @SubscribeEvent
     public static void onMobKilled(LivingDeathEvent event) {
-        if (!(event.getSource().getEntity() instanceof ServerPlayer player)) {
+        if (!LevelUpConfig.COMMON.allMobsDropLevelXp.get()) {
             return;
         }
-        if (!(event.getEntity() instanceof Zombie zombie)) {
+        if (!(event.getEntity() instanceof LivingEntity deadEntity)) {
             return;
         }
-        // Temporary testing behavior: zombies only, fixed 50 LevelUP XP dropped as blue orbs.
-        LevelUpApi.spawnLevelUpXpOrb(player.serverLevel(), zombie.position(), 50);
+        if (deadEntity instanceof ServerPlayer) {
+            return;
+        }
+        if (!(deadEntity.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        if (!(deadEntity.getKillCredit() instanceof ServerPlayer killer)) {
+            return;
+        }
+
+        int baseDrop = LevelUpConfig.COMMON.mobKillXp.get();
+        int vanillaXp = Math.max(0, deadEntity.getExperienceReward(serverLevel, killer));
+        int totalDrop = baseDrop + vanillaXp;
+        if (totalDrop <= 0) {
+            return;
+        }
+
+        LevelUpApi.spawnLevelUpXpOrb(serverLevel, deadEntity.position(), totalDrop);
     }
 
     @SubscribeEvent

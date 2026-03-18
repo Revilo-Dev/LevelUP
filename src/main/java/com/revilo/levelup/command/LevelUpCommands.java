@@ -1,10 +1,12 @@
 package com.revilo.levelup.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.revilo.levelup.api.LevelUpApi;
 import com.revilo.levelup.api.LevelUpSources;
+import com.revilo.levelup.config.LevelUpConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -95,6 +97,18 @@ public final class LevelUpCommands {
                                                 IntegerArgumentType.getInteger(ctx, "value")
                                         ))))
         );
+
+        dispatcher.register(
+                Commands.literal("skills")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("level_multiplier")
+                                .executes(ctx -> getLevelMultiplier(ctx.getSource()))
+                                .then(Commands.argument("value", DoubleArgumentType.doubleArg(0.01D))
+                                        .executes(ctx -> setLevelMultiplier(
+                                                ctx.getSource(),
+                                                DoubleArgumentType.getDouble(ctx, "value")
+                                        ))))
+        );
     }
 
     private static int addXp(CommandSourceStack source, Collection<ServerPlayer> targets, long amount, ResourceLocation xpSource) {
@@ -147,6 +161,18 @@ public final class LevelUpCommands {
         int nextLevel = Math.max(0, LevelUpApi.getLevel(player) + value);
         LevelUpApi.setLevel(player, nextLevel);
         source.sendSuccess(() -> Component.literal("Level is now " + LevelUpApi.getLevel(player) + "."), false);
+        return 1;
+    }
+
+    private static int getLevelMultiplier(CommandSourceStack source) {
+        double current = LevelUpConfig.COMMON.levelMultiplier.get();
+        source.sendSuccess(() -> Component.literal("Current LevelUP XP level multiplier: " + current), false);
+        return 1;
+    }
+
+    private static int setLevelMultiplier(CommandSourceStack source, double value) {
+        LevelUpConfig.COMMON.levelMultiplier.set(value);
+        source.sendSuccess(() -> Component.literal("Set LevelUP XP level multiplier to " + value + "."), true);
         return 1;
     }
 }
