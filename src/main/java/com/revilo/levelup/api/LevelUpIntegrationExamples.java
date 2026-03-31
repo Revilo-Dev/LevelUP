@@ -30,6 +30,11 @@ public final class LevelUpIntegrationExamples {
         return LevelUpApi.meetsLevelRequirement(player, requiredLevel);
     }
 
+    public static void onProgressionPackLoaded() {
+        LevelUpApi.setMaxLevelOverride(1000);
+        LevelUpApi.setLevelMultiplierOverride(0.60D);
+    }
+
     @SubscribeEvent
     public static void onLevelUpGrantSkillPoint(LevelUpLevelChangedEvent.LevelUp event) {
         ServerPlayer player = event.getPlayer();

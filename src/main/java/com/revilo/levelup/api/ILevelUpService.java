@@ -7,6 +7,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 public interface ILevelUpService {
+    int getMaxLevel();
+
+    double getLevelMultiplier();
+
     int getLevel(Player player);
 
     long getXp(Player player);
@@ -22,6 +26,14 @@ public interface ILevelUpService {
     void setXp(ServerPlayer player, long xp);
 
     void setLevel(ServerPlayer player, int level);
+
+    void setMaxLevelOverride(int maxLevel);
+
+    void clearMaxLevelOverride();
+
+    void setLevelMultiplierOverride(double levelMultiplier);
+
+    void clearLevelMultiplierOverride();
 
     void sync(ServerPlayer player);
 

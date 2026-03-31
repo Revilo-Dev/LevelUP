@@ -5,7 +5,6 @@ import net.minecraft.resources.ResourceLocation;
 
 public final class LevelUpSources {
     public static final ResourceLocation UNKNOWN = id("unknown");
-    public static final ResourceLocation VANILLA_XP = id("vanilla_xp");
     public static final ResourceLocation MOB_KILL = id("mob_kill");
     public static final ResourceLocation GATEWAY_COMPLETE = id("gateway_complete");
     public static final ResourceLocation QUEST_COMPLETE = id("quest_complete");

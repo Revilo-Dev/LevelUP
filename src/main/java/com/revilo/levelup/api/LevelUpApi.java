@@ -11,6 +11,14 @@ public final class LevelUpApi {
 
     private LevelUpApi() {}
 
+    public static int getMaxLevel() {
+        return SERVICE.getMaxLevel();
+    }
+
+    public static double getLevelMultiplier() {
+        return SERVICE.getLevelMultiplier();
+    }
+
     public static int getLevel(Player player) {
         return SERVICE.getLevel(player);
     }
@@ -45,6 +53,22 @@ public final class LevelUpApi {
 
     public static void setLevel(ServerPlayer player, int level) {
         SERVICE.setLevel(player, level);
+    }
+
+    public static void setMaxLevelOverride(int maxLevel) {
+        SERVICE.setMaxLevelOverride(maxLevel);
+    }
+
+    public static void clearMaxLevelOverride() {
+        SERVICE.clearMaxLevelOverride();
+    }
+
+    public static void setLevelMultiplierOverride(double levelMultiplier) {
+        SERVICE.setLevelMultiplierOverride(levelMultiplier);
+    }
+
+    public static void clearLevelMultiplierOverride() {
+        SERVICE.clearLevelMultiplierOverride();
     }
 
     public static void sync(ServerPlayer player) {

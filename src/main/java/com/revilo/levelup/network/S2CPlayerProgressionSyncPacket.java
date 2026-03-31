@@ -8,6 +8,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record S2CPlayerProgressionSyncPacket(int level, long xp) implements CustomPacketPayload {
@@ -34,8 +36,20 @@ public record S2CPlayerProgressionSyncPacket(int level, long xp) implements Cust
         context.enqueueWork(() -> {
             Player player = context.player();
             PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+            long oldXp = data.getXp();
             data.setLevel(payload.level());
             data.setXp(payload.xp());
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                ClientHooks.onProgressionUpdated(oldXp, payload.xp());
+            }
         });
+    }
+
+    private static final class ClientHooks {
+        private ClientHooks() {}
+
+        private static void onProgressionUpdated(long oldXp, long newXp) {
+            com.revilo.levelup.client.gui.TopCenterLevelOverlay.onProgressionUpdated(oldXp, newXp);
+        }
     }
 }

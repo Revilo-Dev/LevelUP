@@ -2,7 +2,6 @@ package com.revilo.levelup.event;
 
 import com.revilo.levelup.LevelUpMod;
 import com.revilo.levelup.api.LevelUpApi;
-import com.revilo.levelup.api.LevelUpSources;
 import com.revilo.levelup.config.LevelUpConfig;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,7 +10,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 
 @EventBusSubscriber(modid = LevelUpMod.MOD_ID)
 public final class LevelUpGameplayEvents {
@@ -64,22 +62,5 @@ public final class LevelUpGameplayEvents {
         }
 
         LevelUpApi.spawnLevelUpXpOrb(serverLevel, deadEntity.position(), totalDrop);
-    }
-
-    @SubscribeEvent
-    public static void onVanillaXpGain(PlayerXpEvent.XpChange event) {
-        if (!LevelUpConfig.COMMON.convertVanillaXp.get()) {
-            return;
-        }
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        if (event.getAmount() <= 0) {
-            return;
-        }
-        long converted = Math.round(event.getAmount() * LevelUpConfig.COMMON.vanillaXpMultiplier.get());
-        if (converted > 0L) {
-            LevelUpApi.awardXp(player, converted, LevelUpSources.VANILLA_XP);
-        }
     }
 }

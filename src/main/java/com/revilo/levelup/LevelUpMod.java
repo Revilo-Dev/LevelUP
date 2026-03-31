@@ -1,6 +1,7 @@
 package com.revilo.levelup;
 
 import com.revilo.levelup.config.LevelUpConfig;
+import com.revilo.levelup.config.LevelUpClientConfig;
 import com.revilo.levelup.client.LevelUpClientEvents;
 import com.revilo.levelup.command.LevelUpCommands;
 import com.revilo.levelup.network.LevelUpNetwork;
@@ -27,6 +28,8 @@ public final class LevelUpMod {
         NeoForge.EVENT_BUS.addListener(LevelUpCommands::onRegisterCommands);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(LevelUpClientEvents::onRegisterRenderers);
+            modBus.addListener(LevelUpClientEvents::onRegisterGuiLayers);
+            modContainer.registerConfig(ModConfig.Type.CLIENT, LevelUpClientConfig.SPEC);
         }
         modContainer.registerConfig(ModConfig.Type.COMMON, LevelUpConfig.SPEC);
     }

@@ -1,6 +1,5 @@
 package com.revilo.levelup.api;
 
-import com.revilo.levelup.config.LevelUpConfig;
 import com.revilo.levelup.data.LevelFormula;
 import com.revilo.levelup.data.PlayerProgressionData;
 import com.revilo.levelup.entity.LevelUpXpOrbEntity;
@@ -20,6 +19,16 @@ public final class LevelUpService implements ILevelUpService {
     public static final LevelUpService INSTANCE = new LevelUpService();
 
     private LevelUpService() {}
+
+    @Override
+    public int getMaxLevel() {
+        return LevelUpProgressionOverrides.getMaxLevel();
+    }
+
+    @Override
+    public double getLevelMultiplier() {
+        return LevelUpProgressionOverrides.getLevelMultiplier();
+    }
 
     @Override
     public int getLevel(Player player) {
@@ -128,6 +137,26 @@ public final class LevelUpService implements ILevelUpService {
     }
 
     @Override
+    public void setMaxLevelOverride(int maxLevel) {
+        LevelUpProgressionOverrides.setMaxLevelOverride(maxLevel);
+    }
+
+    @Override
+    public void clearMaxLevelOverride() {
+        LevelUpProgressionOverrides.clearMaxLevelOverride();
+    }
+
+    @Override
+    public void setLevelMultiplierOverride(double levelMultiplier) {
+        LevelUpProgressionOverrides.setLevelMultiplierOverride(levelMultiplier);
+    }
+
+    @Override
+    public void clearLevelMultiplierOverride() {
+        LevelUpProgressionOverrides.clearLevelMultiplierOverride();
+    }
+
+    @Override
     public void sync(ServerPlayer player) {
         LevelUpNetwork.syncPlayer(player);
     }
@@ -140,9 +169,5 @@ public final class LevelUpService implements ILevelUpService {
     @Override
     public void spawnXpOrb(ServerLevel level, double x, double y, double z, int amount) {
         spawnXpOrb(level, new Vec3(x, y, z), amount);
-    }
-
-    private static int getMaxLevel() {
-        return LevelUpConfig.COMMON.maxLevel.get();
     }
 }

@@ -1,5 +1,6 @@
 package com.revilo.levelup.data;
 
+import com.revilo.levelup.api.LevelUpProgressionOverrides;
 import com.revilo.levelup.config.LevelUpConfig;
 
 public final class LevelFormula {
@@ -9,6 +10,10 @@ public final class LevelFormula {
     private static final int PEAK_END_LEVEL_EXCLUSIVE = 100;
 
     private LevelFormula() {}
+
+    public static int getConfiguredMaxLevel() {
+        return Math.max(1, LevelUpConfig.COMMON.maxLevel.get());
+    }
 
     public static long xpForNextLevel(int currentLevel) {
         int safeLevel = Math.max(0, currentLevel);
@@ -21,7 +26,7 @@ public final class LevelFormula {
         double exponent = LevelUpConfig.COMMON.exponent.get();
         double raw = base * Math.pow(safeLevel + 1.0D, exponent) + (linear * safeLevel);
         raw *= bandMultiplier(safeLevel);
-        raw *= LevelUpConfig.COMMON.levelMultiplier.get();
+        raw *= LevelUpProgressionOverrides.getLevelMultiplier();
         long value = Math.max(1L, Math.round(raw));
         return Math.min(value, Integer.MAX_VALUE);
     }

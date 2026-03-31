@@ -22,8 +22,6 @@ public final class LevelUpConfig {
         public final ModConfigSpec.IntValue maxLevel;
         public final ModConfigSpec.IntValue mobKillXp;
         public final ModConfigSpec.BooleanValue allMobsDropLevelXp;
-        public final ModConfigSpec.BooleanValue convertVanillaXp;
-        public final ModConfigSpec.DoubleValue vanillaXpMultiplier;
 
         private Common(ModConfigSpec.Builder builder) {
             builder.push("progression");
@@ -44,10 +42,6 @@ public final class LevelUpConfig {
                     .defineInRange("mobKillXp", 8, 0, Integer.MAX_VALUE);
             allMobsDropLevelXp = builder.comment("When true, all non-player mobs drop LevelUP XP orbs on player kill.")
                     .define("allMobsDropLevelXp", true);
-            convertVanillaXp = builder.comment("When true, vanilla XP gain also grants LevelUP XP.")
-                    .define("convertVanillaXp", false);
-            vanillaXpMultiplier = builder.comment("LevelUP XP per 1 vanilla XP point.")
-                    .defineInRange("vanillaXpMultiplier", 1.0D, 0.0D, 1000.0D);
             builder.pop();
         }
     }
