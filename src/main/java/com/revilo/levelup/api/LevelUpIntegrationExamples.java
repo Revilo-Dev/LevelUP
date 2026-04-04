@@ -21,6 +21,10 @@ public final class LevelUpIntegrationExamples {
         LevelUpApi.spawnLevelUpXpOrb(player.serverLevel(), rewardPos, xpReward);
     }
 
+    public static void onShrineCompleted(ServerPlayer player, Vec3 rewardPos, int rewardLevel) {
+        LevelUpApi.spawnLevelUpXpOrbForLevel(player.serverLevel(), rewardPos, rewardLevel);
+    }
+
     public static double scaleGatewayModifier(ServerPlayer player, double baseValue) {
         int level = LevelUpApi.getLevel(player);
         return baseValue * (1.0D + (level * 0.01D));

@@ -20,8 +20,9 @@ public final class TopCenterLevelOverlay {
     private static final int BAR_WIDTH = 184;
     private static final int BAR_HEIGHT = 11;
     private static final int TOP_MARGIN = 18;
-    private static final long FADE_IN_MILLIS = 150L;
-    private static final long FADE_OUT_MILLIS = 400L;
+    private static final int SLIDE_OFFSET = BAR_HEIGHT + 18;
+    private static final long SLIDE_IN_MILLIS = 150L;
+    private static final long SLIDE_OUT_MILLIS = 400L;
     private static final long HOLD_MILLIS = 1200L;
     private static final long MIN_ANIMATION_MILLIS = 650L;
     private static final long MAX_ANIMATION_MILLIS = 1800L;
@@ -30,8 +31,9 @@ public final class TopCenterLevelOverlay {
     private static long startXp;
     private static long displayedXp;
     private static long targetXp;
-    private static long animationStartedAt;
-    private static long animationEndsAt;
+    private static long progressAnimationStartedAt;
+    private static long progressAnimationEndsAt;
+    private static long visibleStartedAt;
     private static long visibleUntil;
 
     private TopCenterLevelOverlay() {}
@@ -48,8 +50,9 @@ public final class TopCenterLevelOverlay {
             startXp = safeNewXp;
             displayedXp = safeNewXp;
             targetXp = safeNewXp;
-            animationStartedAt = now;
-            animationEndsAt = now;
+            progressAnimationStartedAt = now;
+            progressAnimationEndsAt = now;
+            visibleStartedAt = now;
             visibleUntil = 0L;
             return;
         }
@@ -58,19 +61,24 @@ public final class TopCenterLevelOverlay {
             startXp = safeNewXp;
             displayedXp = safeNewXp;
             targetXp = safeNewXp;
-            animationStartedAt = now;
-            animationEndsAt = now;
+            progressAnimationStartedAt = now;
+            progressAnimationEndsAt = now;
+            visibleStartedAt = now;
             visibleUntil = 0L;
             return;
         }
 
+        boolean wasHidden = now >= visibleUntil;
         long currentDisplayedXp = getDisplayedXp(now);
         startXp = currentDisplayedXp;
         displayedXp = currentDisplayedXp;
         targetXp = safeNewXp;
-        animationStartedAt = now;
-        animationEndsAt = now + getAnimationDuration(currentDisplayedXp, safeNewXp);
-        visibleUntil = animationEndsAt + HOLD_MILLIS;
+        progressAnimationStartedAt = now;
+        progressAnimationEndsAt = now + getAnimationDuration(currentDisplayedXp, safeNewXp);
+        if (wasHidden) {
+            visibleStartedAt = now;
+        }
+        visibleUntil = progressAnimationEndsAt + HOLD_MILLIS;
     }
 
     public static void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
@@ -97,15 +105,12 @@ public final class TopCenterLevelOverlay {
 
         int x = (minecraft.getWindow().getGuiScaledWidth() - BAR_WIDTH) / 2;
         int y = TOP_MARGIN + getAnimatedYOffset(now);
-        int alpha = getAlpha(now);
-        int textColor = (alpha << 24) | 0x3B9DFF;
+        int textColor = 0xFF3B9DFF;
 
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha / 255.0F);
         guiGraphics.blit(BAR_BACKGROUND, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
         if (progressWidth > 0) {
             guiGraphics.blit(BAR_PROGRESS, x, y, 0, 0, progressWidth, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
         }
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         Component label = Component.translatable("levelup.ui.level", level);
         int textWidth = minecraft.font.width(label);
@@ -116,14 +121,14 @@ public final class TopCenterLevelOverlay {
         if (!initialized) {
             return 0L;
         }
-        if (now >= animationEndsAt || animationEndsAt <= animationStartedAt) {
+        if (now >= progressAnimationEndsAt || progressAnimationEndsAt <= progressAnimationStartedAt) {
             displayedXp = targetXp;
             return displayedXp;
         }
 
-        float rawProgress = (float) (now - animationStartedAt) / (float) (animationEndsAt - animationStartedAt);
-        float easedProgress = rawProgress * rawProgress * (3.0F - (2.0F * rawProgress));
-        displayedXp = startXp + Math.round((targetXp - startXp) * easedProgress);
+        float rawProgress = (float) (now - progressAnimationStartedAt) / (float) (progressAnimationEndsAt - progressAnimationStartedAt);
+        float clampedProgress = Math.max(0.0F, Math.min(1.0F, rawProgress));
+        displayedXp = startXp + Math.round((targetXp - startXp) * clampedProgress);
         return displayedXp;
     }
 
@@ -133,23 +138,23 @@ public final class TopCenterLevelOverlay {
         return Math.max(MIN_ANIMATION_MILLIS, Math.min(MAX_ANIMATION_MILLIS, duration));
     }
 
-    private static int getAlpha(long now) {
-        if (now < animationStartedAt + FADE_IN_MILLIS) {
-            float progress = (float) (now - animationStartedAt) / (float) FADE_IN_MILLIS;
-            return Math.max(0, Math.min(255, Math.round(255.0F * progress)));
-        }
-        if (now > visibleUntil - FADE_OUT_MILLIS) {
-            float progress = (float) (visibleUntil - now) / (float) FADE_OUT_MILLIS;
-            return Math.max(0, Math.min(255, Math.round(255.0F * progress)));
-        }
-        return 255;
-    }
-
     private static int getAnimatedYOffset(long now) {
-        if (now >= animationStartedAt + FADE_IN_MILLIS) {
+        if (now < visibleStartedAt + SLIDE_IN_MILLIS) {
+            float progress = (float) (now - visibleStartedAt) / (float) SLIDE_IN_MILLIS;
+            float clampedProgress = Math.max(0.0F, Math.min(1.0F, progress));
+            return Math.round((1.0F - clampedProgress) * -SLIDE_OFFSET);
+        }
+        if (now > visibleUntil - SLIDE_OUT_MILLIS) {
+            float progress = (float) (visibleUntil - now) / (float) SLIDE_OUT_MILLIS;
+            float clampedProgress = Math.max(0.0F, Math.min(1.0F, progress));
+            return Math.round((1.0F - clampedProgress) * -SLIDE_OFFSET);
+        }
+        if (now >= visibleUntil) {
+            return -SLIDE_OFFSET;
+        }
+        if (now >= visibleStartedAt + SLIDE_IN_MILLIS) {
             return 0;
         }
-        float progress = (float) (now - animationStartedAt) / (float) FADE_IN_MILLIS;
-        return Math.round((1.0F - Math.max(0.0F, Math.min(1.0F, progress))) * -8.0F);
+        return -SLIDE_OFFSET;
     }
 }

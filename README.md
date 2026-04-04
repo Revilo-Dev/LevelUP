@@ -6,10 +6,68 @@ It provides a public API and event hooks so other mods can read player level, gr
 ## Core Features
 
 - Separate LevelUP XP and level progression from vanilla XP.
-- Configurable XP curve, max level cap, and XP conversion options.
+- Configurable XP curve, max level cap, hostile mob XP drops, and tagged mob XP drops.
 - Server-side LevelUP XP orb entity and pickup flow.
+- Animated top-center HUD overlay for LevelUP XP gain feedback that stays active during chained XP gains, slides down from off-screen when shown, and slides back up when finished.
 - Commands for admins to grant XP and manage progression values.
+- Includes a `test_skill_orb` item that grants LevelUP XP on use.
 - Integration hooks for external mods through static API calls and NeoForge events.
+
+## Config
+
+Common config:
+
+- `progression.baseXpPerLevel` default `100`
+- `progression.linearXpPerLevel` default `20`
+- `progression.exponent` default `1.35`
+- `progression.levelMultiplier` default `0.75`
+- `progression.maxLevel` default `500`
+- `sources.mobKillXp` default `8`
+- `sources.drop_levels_only_from_mobs_with_tag` default `false`
+  When `false`, all hostile mobs drop LevelUP XP.
+  When `true`, only mobs with the `drops_levels` entity tag or mobs whose entity type is in [`#levelup:drops_levels`](/C:/Users/revil/IdeaProjects/LevelUP/src/main/resources/data/levelup/tags/entity_types/drops_levels.json) drop LevelUP XP.
+
+Client config:
+
+- `hud.showTopCenterLevelOverlay` default `true`
+  Controls the top-center HUD LevelUP display.
+  The overlay remains visible while LevelUP XP is still being gained, slides down from off-screen when it appears, and slides up off-screen after the final gain finishes animating.
+- `hud.showInventoryLevelBar` default `true`
+  Controls the LevelUP progress bar shown in the inventory screen.
+
+## Mob Tagging
+
+LevelUP now supports two ways to mark mobs as eligible for LevelUP XP drops when `sources.drop_levels_only_from_mobs_with_tag=true`.
+
+- Per-entity tag: add the entity tag `drops_levels` when the mob is spawned.
+- Entity type tag: add the mob's entity type to [`#levelup:drops_levels`](/C:/Users/revil/IdeaProjects/LevelUP/src/main/resources/data/levelup/tags/entity_types/drops_levels.json) from a datapack or mod.
+
+Examples:
+
+```mcfunction
+summon minecraft:zombie ~ ~ ~ {Tags:["drops_levels"]}
+```
+
+Spawn eggs or other spawn systems can do the same by setting the spawned entity NBT `Tags:["drops_levels"]`.
+
+## Commands
+
+- `/levelup addxp <targets> <amount> [source]`
+- `/levelup setxp <targets> <amount>`
+- `/levelup setlevel <targets> <level>`
+- `/levelup spawnorb <amount> [pos]`
+- `/levelup spawnorblevel <level> [pos]`
+- `/level reset`
+- `/level set <value>`
+- `/level add <value>`
+- `/skills level_multiplier [value]`
+
+`/levelup spawnorblevel` spawns a LevelUP orb reward worth the total XP floor for the specified level.
+
+## Included Content
+
+- `levelup:test_skill_orb` grants `20` LevelUP XP on use.
+- `levelup:level_orb` is the custom XP orb entity used by LevelUP rewards.
 
 ## Integration API (for other mods)
 
@@ -17,13 +75,18 @@ Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 
 - `int getLevel(Player player)` returns the player LevelUP level.
 - `long getXp(Player player)` returns total stored LevelUP XP.
+- `long getXpIntoCurrentLevel(Player player)` returns the player's current progress inside their active level band.
 - `long getXpNeededForNextLevel(Player player)` returns remaining XP to level up.
 - `float getProgressToNextLevel(Player player)` returns 0..1 progress for current level.
 - `int getMaxLevel()` returns the active max level after config or runtime override resolution.
 - `double getLevelMultiplier()` returns the active XP cost multiplier after config or runtime override resolution.
+- `long getXpForNextLevel(int currentLevel)` returns the XP cost to advance from the supplied level.
+- `long getTotalXpForLevel(int level)` returns the total XP floor for the supplied level.
+- `int levelForTotalXp(long totalXp)` resolves a raw total XP value into a LevelUP level using the active max level.
 - `boolean meetsLevelRequirement(Player player, int requiredLevel)` checks level gates.
 - `long addXp(ServerPlayer player, long amount, ResourceLocation source)` grants XP and returns applied amount after event modifiers.
 - `void awardXp(ServerPlayer player, long amount, ResourceLocation source)` convenience wrapper for granting XP.
+- `long addLevels(ServerPlayer player, int levels, ResourceLocation source)` grants enough XP to add whole levels from the player's current progression, capped by max level.
 - `void setXp(ServerPlayer player, long xp)` directly sets total XP and recalculates level.
 - `void setLevel(ServerPlayer player, int level)` sets level by assigning total XP floor for that level.
 - `void setMaxLevelOverride(int maxLevel)` overrides the configured hard cap until cleared.
@@ -33,6 +96,8 @@ Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 - `void sync(ServerPlayer player)` forces network sync of progression data.
 - `void spawnLevelUpXpOrb(ServerLevel level, Vec3 position, int amount)` spawns LevelUP XP orbs.
 - `void spawnLevelUpXpOrb(ServerLevel level, double x, double y, double z, int amount)` coordinate overload for orb spawning.
+- `void spawnLevelUpXpOrbForLevel(ServerLevel level, Vec3 position, int level)` spawns LevelUP XP orbs worth the total XP floor for the supplied level.
+- `void spawnLevelUpXpOrbForLevel(ServerLevel level, double x, double y, double z, int level)` coordinate overload for level-based orb spawning.
 
 ## Events You Can Subscribe To
 

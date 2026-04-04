@@ -15,13 +15,23 @@ public interface ILevelUpService {
 
     long getXp(Player player);
 
+    long getXpIntoCurrentLevel(Player player);
+
     long getXpNeededForNextLevel(Player player);
 
     float getProgressToNextLevel(Player player);
 
+    long getXpForNextLevel(int currentLevel);
+
+    long getTotalXpForLevel(int level);
+
+    int levelForTotalXp(long totalXp);
+
     boolean meetsLevelRequirement(Player player, int requiredLevel);
 
     long addXp(ServerPlayer player, long amount, ResourceLocation source);
+
+    long addLevels(ServerPlayer player, int levels, ResourceLocation source);
 
     void setXp(ServerPlayer player, long xp);
 
@@ -40,4 +50,8 @@ public interface ILevelUpService {
     void spawnXpOrb(ServerLevel level, Vec3 position, int amount);
 
     void spawnXpOrb(ServerLevel level, double x, double y, double z, int amount);
+
+    void spawnXpOrbForLevel(ServerLevel serverLevel, Vec3 position, int targetLevel);
+
+    void spawnXpOrbForLevel(ServerLevel serverLevel, double x, double y, double z, int targetLevel);
 }

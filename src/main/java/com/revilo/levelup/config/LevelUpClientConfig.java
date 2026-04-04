@@ -16,11 +16,14 @@ public final class LevelUpClientConfig {
 
     public static final class Client {
         public final ModConfigSpec.BooleanValue showTopCenterLevelOverlay;
+        public final ModConfigSpec.BooleanValue showInventoryLevelBar;
 
         private Client(ModConfigSpec.Builder builder) {
             builder.push("hud");
             showTopCenterLevelOverlay = builder.comment("Show an animated LevelUP progress bar at the top center of the HUD when LevelUP XP increases.")
                     .define("showTopCenterLevelOverlay", true);
+            showInventoryLevelBar = builder.comment("Show the LevelUP progress bar inside the inventory screen.")
+                    .define("showInventoryLevelBar", true);
             builder.pop();
         }
     }

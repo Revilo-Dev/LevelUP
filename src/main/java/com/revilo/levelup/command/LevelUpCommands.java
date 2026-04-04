@@ -73,8 +73,21 @@ public final class LevelUpCommands {
                                         ))
                                         .then(Commands.argument("pos", Vec3Argument.vec3())
                                                 .executes(ctx -> spawnOrb(
+                                                ctx.getSource(),
+                                                IntegerArgumentType.getInteger(ctx, "amount"),
+                                                Vec3Argument.getVec3(ctx, "pos")
+                                                )))))
+                        .then(Commands.literal("spawnorblevel")
+                                .then(Commands.argument("level", IntegerArgumentType.integer(1))
+                                        .executes(ctx -> spawnOrbLevel(
+                                                ctx.getSource(),
+                                                IntegerArgumentType.getInteger(ctx, "level"),
+                                                ctx.getSource().getPosition()
+                                        ))
+                                        .then(Commands.argument("pos", Vec3Argument.vec3())
+                                                .executes(ctx -> spawnOrbLevel(
                                                         ctx.getSource(),
-                                                        IntegerArgumentType.getInteger(ctx, "amount"),
+                                                        IntegerArgumentType.getInteger(ctx, "level"),
                                                         Vec3Argument.getVec3(ctx, "pos")
                                                 )))))
         );
@@ -138,6 +151,18 @@ public final class LevelUpCommands {
     private static int spawnOrb(CommandSourceStack source, int amount, Vec3 pos) {
         LevelUpApi.spawnLevelUpXpOrb(source.getLevel(), pos, amount);
         source.sendSuccess(() -> Component.literal("Spawned LevelUP orb reward for " + amount + " XP."), true);
+        return 1;
+    }
+
+    private static int spawnOrbLevel(CommandSourceStack source, int level, Vec3 pos) {
+        long xpValue = LevelUpApi.getTotalXpForLevel(level);
+        if (xpValue <= 0L) {
+            source.sendSuccess(() -> Component.literal("Level " + level + " resolves to 0 LevelUP XP."), false);
+            return 1;
+        }
+
+        LevelUpApi.spawnLevelUpXpOrbForLevel(source.getLevel(), pos, level);
+        source.sendSuccess(() -> Component.literal("Spawned LevelUP orb reward for level " + level + " (" + xpValue + " XP)."), true);
         return 1;
     }
 

@@ -41,15 +41,21 @@ public final class LevelUpService implements ILevelUpService {
     }
 
     @Override
+    public long getXpIntoCurrentLevel(Player player) {
+        int level = getLevel(player);
+        long total = getXp(player);
+        long floor = LevelFormula.totalXpForLevel(level);
+        return Math.max(0L, total - floor);
+    }
+
+    @Override
     public long getXpNeededForNextLevel(Player player) {
         int level = getLevel(player);
         if (level >= getMaxLevel()) {
             return 0L;
         }
-        long total = getXp(player);
-        long progressFloor = LevelFormula.totalXpForLevel(level);
-        long progress = Math.max(0L, total - progressFloor);
-        long cost = LevelFormula.xpForNextLevel(level);
+        long progress = getXpIntoCurrentLevel(player);
+        long cost = getXpForNextLevel(level);
         return Math.max(0L, cost - progress);
     }
 
@@ -59,11 +65,24 @@ public final class LevelUpService implements ILevelUpService {
         if (level >= getMaxLevel()) {
             return 1.0F;
         }
-        long total = getXp(player);
-        long floor = LevelFormula.totalXpForLevel(level);
-        long intoLevel = Math.max(0L, total - floor);
-        long cost = Math.max(1L, LevelFormula.xpForNextLevel(level));
+        long intoLevel = getXpIntoCurrentLevel(player);
+        long cost = Math.max(1L, getXpForNextLevel(level));
         return Math.min(1.0F, (float) intoLevel / (float) cost);
+    }
+
+    @Override
+    public long getXpForNextLevel(int currentLevel) {
+        return LevelFormula.xpForNextLevel(currentLevel);
+    }
+
+    @Override
+    public long getTotalXpForLevel(int level) {
+        return LevelFormula.totalXpForLevel(level);
+    }
+
+    @Override
+    public int levelForTotalXp(long totalXp) {
+        return LevelFormula.levelForXp(totalXp, getMaxLevel());
     }
 
     @Override
@@ -110,6 +129,21 @@ public final class LevelUpService implements ILevelUpService {
 
         sync(player);
         return gain;
+    }
+
+    @Override
+    public long addLevels(ServerPlayer player, int levels, ResourceLocation source) {
+        int safeLevels = Math.max(0, levels);
+        if (safeLevels == 0) {
+            return 0L;
+        }
+
+        int currentLevel = getLevel(player);
+        int targetLevel = Math.min(getMaxLevel(), currentLevel + safeLevels);
+        long targetXp = getTotalXpForLevel(targetLevel);
+        long currentXp = getXp(player);
+        long xpToAdd = Math.max(0L, targetXp - currentXp);
+        return addXp(player, xpToAdd, source);
     }
 
     @Override
@@ -169,5 +203,19 @@ public final class LevelUpService implements ILevelUpService {
     @Override
     public void spawnXpOrb(ServerLevel level, double x, double y, double z, int amount) {
         spawnXpOrb(level, new Vec3(x, y, z), amount);
+    }
+
+    @Override
+    public void spawnXpOrbForLevel(ServerLevel serverLevel, Vec3 position, int targetLevel) {
+        long totalXp = getTotalXpForLevel(targetLevel);
+        int orbValue = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, totalXp));
+        if (orbValue > 0) {
+            spawnXpOrb(serverLevel, position, orbValue);
+        }
+    }
+
+    @Override
+    public void spawnXpOrbForLevel(ServerLevel serverLevel, double x, double y, double z, int targetLevel) {
+        spawnXpOrbForLevel(serverLevel, new Vec3(x, y, z), targetLevel);
     }
 }

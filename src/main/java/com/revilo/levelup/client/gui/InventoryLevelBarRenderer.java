@@ -1,6 +1,7 @@
 package com.revilo.levelup.client.gui;
 
 import com.revilo.levelup.api.LevelUpApi;
+import com.revilo.levelup.config.LevelUpClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -24,6 +25,9 @@ public final class InventoryLevelBarRenderer {
         }
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) {
+            return;
+        }
+        if (!LevelUpClientConfig.CLIENT.showInventoryLevelBar.get()) {
             return;
         }
 
