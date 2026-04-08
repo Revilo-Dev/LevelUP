@@ -4,6 +4,7 @@ import com.revilo.levelup.LevelUpMod;
 import com.revilo.levelup.client.entity.LevelUpXpOrbRenderer;
 import com.revilo.levelup.client.gui.InventoryLevelBarRenderer;
 import com.revilo.levelup.client.gui.TopCenterLevelOverlay;
+import com.revilo.levelup.event.LevelUpHudDisplayEvent;
 import com.revilo.levelup.registry.LevelUpEntities;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -31,6 +32,11 @@ public final class LevelUpClientEvents {
         @SubscribeEvent
         public static void onContainerForeground(ContainerScreenEvent.Render.Foreground event) {
             InventoryLevelBarRenderer.render(event);
+        }
+
+        @SubscribeEvent
+        public static void onHudDisplay(LevelUpHudDisplayEvent event) {
+            TopCenterLevelOverlay.showCustom(event.getLabel(), event.getProgress(), event.getDurationMillis());
         }
     }
 }

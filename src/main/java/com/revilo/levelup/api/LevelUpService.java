@@ -17,6 +17,7 @@ import net.neoforged.neoforge.common.NeoForge;
 
 public final class LevelUpService implements ILevelUpService {
     public static final LevelUpService INSTANCE = new LevelUpService();
+    private volatile boolean paused;
 
     private LevelUpService() {}
 
@@ -38,6 +39,11 @@ public final class LevelUpService implements ILevelUpService {
     @Override
     public long getXp(Player player) {
         return player.getData(LevelUpAttachments.PLAYER_PROGRESSION).getXp();
+    }
+
+    @Override
+    public int getXpMultiplier(Player player) {
+        return player.getData(LevelUpAttachments.PLAYER_PROGRESSION).getMultiplier();
     }
 
     @Override
@@ -92,6 +98,10 @@ public final class LevelUpService implements ILevelUpService {
 
     @Override
     public long addXp(ServerPlayer player, long amount, ResourceLocation source) {
+        if (paused) {
+            return 0L;
+        }
+
         long safeAmount = Math.max(0L, amount);
         if (safeAmount == 0L) {
             return 0L;
@@ -102,6 +112,10 @@ public final class LevelUpService implements ILevelUpService {
             return 0L;
         }
         long gain = Math.max(0L, event.getAmount());
+        if (gain == 0L) {
+            return 0L;
+        }
+        gain = saturatingMultiply(gain, getXpMultiplier(player));
         if (gain == 0L) {
             return 0L;
         }
@@ -127,7 +141,7 @@ public final class LevelUpService implements ILevelUpService {
             }
         }
 
-        sync(player);
+        LevelUpNetwork.syncPlayer(player, true);
         return gain;
     }
 
@@ -168,6 +182,23 @@ public final class LevelUpService implements ILevelUpService {
         int clampedLevel = Math.max(0, Math.min(level, getMaxLevel()));
         long xpAtLevel = LevelFormula.totalXpForLevel(clampedLevel);
         setXp(player, xpAtLevel);
+    }
+
+    @Override
+    public void setXpMultiplier(ServerPlayer player, int multiplier) {
+        PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+        data.setMultiplier(multiplier);
+        sync(player);
+    }
+
+    @Override
+    public boolean isPaused() {
+        return paused;
+    }
+
+    @Override
+    public void setPaused(boolean paused) {
+        this.paused = paused;
     }
 
     @Override
@@ -217,5 +248,15 @@ public final class LevelUpService implements ILevelUpService {
     @Override
     public void spawnXpOrbForLevel(ServerLevel serverLevel, double x, double y, double z, int targetLevel) {
         spawnXpOrbForLevel(serverLevel, new Vec3(x, y, z), targetLevel);
+    }
+
+    private static long saturatingMultiply(long value, int multiplier) {
+        if (value <= 0L || multiplier <= 0) {
+            return 0L;
+        }
+        if (value > Long.MAX_VALUE / multiplier) {
+            return Long.MAX_VALUE;
+        }
+        return value * multiplier;
     }
 }

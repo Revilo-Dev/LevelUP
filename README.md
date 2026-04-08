@@ -30,8 +30,14 @@ Common config:
 Client config:
 
 - `hud.showTopCenterLevelOverlay` default `true`
-  Controls the top-center HUD LevelUP display.
-  The overlay remains visible while LevelUP XP is still being gained, slides down from off-screen when it appears, and slides up off-screen after the final gain finishes animating.
+  Controls the LevelUP HUD display.
+- `hud.levelHudPosition` default `top`
+  Accepts `top` or `bottom`.
+  `bottom` replaces the vanilla XP bar while the LevelUP HUD is active and skips the progress animation.
+- `hud.levelHudStayOnScreen` default `false`
+  Keeps the LevelUP HUD visible even when no XP gain is currently animating.
+- `hud.levelHudColor` default `#53a4bc`
+  Tint color for the LevelUP progress fill and level text.
 - `hud.showInventoryLevelBar` default `true`
   Controls the LevelUP progress bar shown in the inventory screen.
 
@@ -52,17 +58,16 @@ Spawn eggs or other spawn systems can do the same by setting the spawned entity 
 
 ## Commands
 
-- `/levelup addxp <targets> <amount> [source]`
-- `/levelup setxp <targets> <amount>`
-- `/levelup setlevel <targets> <level>`
-- `/levelup spawnorb <amount> [pos]`
-- `/levelup spawnorblevel <level> [pos]`
-- `/level reset`
-- `/level set <value>`
-- `/level add <value>`
-- `/skills level_multiplier [value]`
-
-`/levelup spawnorblevel` spawns a LevelUP orb reward worth the total XP floor for the specified level.
+- `/levels add xp <amount> <id>`
+- `/levels add level <amount> <id>`
+- `/levels add multiplier <amount> <id>`
+- `/levels set xp <amount> <id>`
+- `/levels set level <amount> <id>`
+- `/levels set multiplier <amount> <id>`
+- `/levels reset <id>`
+- `/levels spawnorbs <amount>`
+- `/levels pause <true|false>`
+- `/levels query <id>`
 
 ## Included Content
 
@@ -75,6 +80,7 @@ Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 
 - `int getLevel(Player player)` returns the player LevelUP level.
 - `long getXp(Player player)` returns total stored LevelUP XP.
+- `int getXpMultiplier(Player player)` returns the stored per-player XP multiplier.
 - `long getXpIntoCurrentLevel(Player player)` returns the player's current progress inside their active level band.
 - `long getXpNeededForNextLevel(Player player)` returns remaining XP to level up.
 - `float getProgressToNextLevel(Player player)` returns 0..1 progress for current level.
@@ -89,6 +95,9 @@ Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 - `long addLevels(ServerPlayer player, int levels, ResourceLocation source)` grants enough XP to add whole levels from the player's current progression, capped by max level.
 - `void setXp(ServerPlayer player, long xp)` directly sets total XP and recalculates level.
 - `void setLevel(ServerPlayer player, int level)` sets level by assigning total XP floor for that level.
+- `void setXpMultiplier(ServerPlayer player, int multiplier)` sets the stored per-player XP multiplier.
+- `boolean isPaused()` returns whether LevelUP XP gains are currently paused.
+- `void setPaused(boolean paused)` pauses or resumes LevelUP XP gains.
 - `void setMaxLevelOverride(int maxLevel)` overrides the configured hard cap until cleared.
 - `void clearMaxLevelOverride()` restores the configured hard cap.
 - `void setLevelMultiplierOverride(double levelMultiplier)` overrides the configured XP scaling multiplier until cleared.
@@ -108,6 +117,7 @@ All events are posted on `NeoForge.EVENT_BUS`.
 - `LevelUpLevelChangedEvent` fires when stored level changes in either direction.
 - `LevelUpLevelChangedEvent.LevelUp` fires once per level gained when multiple levels are gained in one update.
 - `LevelUpOutputEvent` fires only when level increases and includes old/new level, old/new XP, source, and levels gained.
+- `LevelUpHudDisplayEvent` can be posted client-side to force the HUD on-screen with custom text/progress for a duration.
 
 ## XP Source IDs
 

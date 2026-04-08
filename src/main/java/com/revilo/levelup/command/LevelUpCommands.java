@@ -1,24 +1,17 @@
 package com.revilo.levelup.command;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.revilo.levelup.api.LevelUpApi;
 import com.revilo.levelup.api.LevelUpSources;
-import com.revilo.levelup.config.LevelUpConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
-import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-
-import java.util.Collection;
 
 public final class LevelUpCommands {
     private LevelUpCommands() {}
@@ -29,175 +22,150 @@ public final class LevelUpCommands {
 
     private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-                Commands.literal("levelup")
+                Commands.literal("levels")
                         .requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("addxp")
-                                .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.literal("add")
+                                .then(Commands.literal("xp")
                                         .then(Commands.argument("amount", LongArgumentType.longArg(0))
-                                                .executes(ctx -> addXp(
-                                                        ctx.getSource(),
-                                                        EntityArgument.getPlayers(ctx, "targets"),
-                                                        LongArgumentType.getLong(ctx, "amount"),
-                                                        LevelUpSources.COMMAND
-                                                ))
-                                                .then(Commands.argument("source", ResourceLocationArgument.id())
+                                                .then(Commands.argument("id", EntityArgument.player())
                                                         .executes(ctx -> addXp(
                                                                 ctx.getSource(),
-                                                                EntityArgument.getPlayers(ctx, "targets"),
-                                                                LongArgumentType.getLong(ctx, "amount"),
-                                                                ResourceLocationArgument.getId(ctx, "source")
-                                                        )))
-                                        )))
-                        .then(Commands.literal("setxp")
-                                .then(Commands.argument("targets", EntityArgument.players())
-                                        .then(Commands.argument("amount", LongArgumentType.longArg(0))
-                                                .executes(ctx -> setXp(
-                                                        ctx.getSource(),
-                                                        EntityArgument.getPlayers(ctx, "targets"),
-                                                        LongArgumentType.getLong(ctx, "amount")
-                                                )))))
-                        .then(Commands.literal("setlevel")
-                                .then(Commands.argument("targets", EntityArgument.players())
-                                        .then(Commands.argument("level", IntegerArgumentType.integer(0))
-                                                .executes(ctx -> setLevel(
-                                                        ctx.getSource(),
-                                                        EntityArgument.getPlayers(ctx, "targets"),
-                                                        IntegerArgumentType.getInteger(ctx, "level")
-                                                )))))
-                        .then(Commands.literal("spawnorb")
-                                .then(Commands.argument("amount", IntegerArgumentType.integer(1))
-                                        .executes(ctx -> spawnOrb(
-                                                ctx.getSource(),
-                                                IntegerArgumentType.getInteger(ctx, "amount"),
-                                                ctx.getSource().getPosition()
-                                        ))
-                                        .then(Commands.argument("pos", Vec3Argument.vec3())
-                                                .executes(ctx -> spawnOrb(
-                                                ctx.getSource(),
-                                                IntegerArgumentType.getInteger(ctx, "amount"),
-                                                Vec3Argument.getVec3(ctx, "pos")
-                                                )))))
-                        .then(Commands.literal("spawnorblevel")
-                                .then(Commands.argument("level", IntegerArgumentType.integer(1))
-                                        .executes(ctx -> spawnOrbLevel(
-                                                ctx.getSource(),
-                                                IntegerArgumentType.getInteger(ctx, "level"),
-                                                ctx.getSource().getPosition()
-                                        ))
-                                        .then(Commands.argument("pos", Vec3Argument.vec3())
-                                                .executes(ctx -> spawnOrbLevel(
-                                                        ctx.getSource(),
-                                                        IntegerArgumentType.getInteger(ctx, "level"),
-                                                        Vec3Argument.getVec3(ctx, "pos")
-                                                )))))
-        );
-
-        dispatcher.register(
-                Commands.literal("level")
-                        .requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("reset")
-                                .executes(ctx -> levelReset(ctx.getSource())))
+                                                                EntityArgument.getPlayer(ctx, "id"),
+                                                                LongArgumentType.getLong(ctx, "amount")
+                                                        )))))
+                                .then(Commands.literal("level")
+                                        .then(Commands.argument("amount", IntegerArgumentType.integer())
+                                                .then(Commands.argument("id", EntityArgument.player())
+                                                        .executes(ctx -> addLevel(
+                                                                ctx.getSource(),
+                                                                EntityArgument.getPlayer(ctx, "id"),
+                                                                IntegerArgumentType.getInteger(ctx, "amount")
+                                                        )))))
+                                .then(Commands.literal("multiplier")
+                                        .then(Commands.argument("amount", IntegerArgumentType.integer())
+                                                .then(Commands.argument("id", EntityArgument.player())
+                                                        .executes(ctx -> addMultiplier(
+                                                                ctx.getSource(),
+                                                                EntityArgument.getPlayer(ctx, "id"),
+                                                                IntegerArgumentType.getInteger(ctx, "amount")
+                                                        ))))))
                         .then(Commands.literal("set")
-                                .then(Commands.argument("value", IntegerArgumentType.integer(0))
-                                        .executes(ctx -> levelSet(
+                                .then(Commands.literal("xp")
+                                        .then(Commands.argument("amount", LongArgumentType.longArg(0))
+                                                .then(Commands.argument("id", EntityArgument.player())
+                                                        .executes(ctx -> setXp(
+                                                                ctx.getSource(),
+                                                                EntityArgument.getPlayer(ctx, "id"),
+                                                                LongArgumentType.getLong(ctx, "amount")
+                                                        )))))
+                                .then(Commands.literal("level")
+                                        .then(Commands.argument("amount", IntegerArgumentType.integer(0))
+                                                .then(Commands.argument("id", EntityArgument.player())
+                                                        .executes(ctx -> setLevel(
+                                                                ctx.getSource(),
+                                                                EntityArgument.getPlayer(ctx, "id"),
+                                                                IntegerArgumentType.getInteger(ctx, "amount")
+                                                        )))))
+                                .then(Commands.literal("multiplier")
+                                        .then(Commands.argument("amount", IntegerArgumentType.integer(0))
+                                                .then(Commands.argument("id", EntityArgument.player())
+                                                        .executes(ctx -> setMultiplier(
+                                                                ctx.getSource(),
+                                                                EntityArgument.getPlayer(ctx, "id"),
+                                                                IntegerArgumentType.getInteger(ctx, "amount")
+                                                        ))))))
+                        .then(Commands.literal("reset")
+                                .then(Commands.argument("id", EntityArgument.player())
+                                        .executes(ctx -> reset(
                                                 ctx.getSource(),
-                                                IntegerArgumentType.getInteger(ctx, "value")
+                                                EntityArgument.getPlayer(ctx, "id")
                                         ))))
-                        .then(Commands.literal("add")
-                                .then(Commands.argument("value", IntegerArgumentType.integer())
-                                        .executes(ctx -> levelAdd(
+                        .then(Commands.literal("spawnorbs")
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                                        .executes(ctx -> spawnOrbs(
                                                 ctx.getSource(),
-                                                IntegerArgumentType.getInteger(ctx, "value")
+                                                IntegerArgumentType.getInteger(ctx, "amount")
+                                        ))))
+                        .then(Commands.literal("pause")
+                                .then(Commands.argument("value", BoolArgumentType.bool())
+                                        .executes(ctx -> setPaused(
+                                                ctx.getSource(),
+                                                BoolArgumentType.getBool(ctx, "value")
+                                        ))))
+                        .then(Commands.literal("query")
+                                .then(Commands.argument("id", EntityArgument.player())
+                                        .executes(ctx -> query(
+                                                ctx.getSource(),
+                                                EntityArgument.getPlayer(ctx, "id")
                                         ))))
         );
-
-        dispatcher.register(
-                Commands.literal("skills")
-                        .requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("level_multiplier")
-                                .executes(ctx -> getLevelMultiplier(ctx.getSource()))
-                                .then(Commands.argument("value", DoubleArgumentType.doubleArg(0.01D))
-                                        .executes(ctx -> setLevelMultiplier(
-                                                ctx.getSource(),
-                                                DoubleArgumentType.getDouble(ctx, "value")
-                                        ))))
-        );
     }
 
-    private static int addXp(CommandSourceStack source, Collection<ServerPlayer> targets, long amount, ResourceLocation xpSource) {
-        for (ServerPlayer player : targets) {
-            LevelUpApi.awardXp(player, amount, xpSource);
-        }
-        source.sendSuccess(() -> Component.literal("Granted " + amount + " LevelUP XP to " + targets.size() + " player(s)."), true);
-        return targets.size();
+    private static int addXp(CommandSourceStack source, ServerPlayer player, long amount) {
+        long applied = LevelUpApi.addXp(player, amount, LevelUpSources.COMMAND);
+        source.sendSuccess(() -> Component.literal("Added " + applied + " XP to " + player.getGameProfile().getName() + "."), true);
+        return applied > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) applied;
     }
 
-    private static int setXp(CommandSourceStack source, Collection<ServerPlayer> targets, long amount) {
-        for (ServerPlayer player : targets) {
-            LevelUpApi.setXp(player, amount);
-        }
-        source.sendSuccess(() -> Component.literal("Set LevelUP XP to " + amount + " for " + targets.size() + " player(s)."), true);
-        return targets.size();
-    }
-
-    private static int setLevel(CommandSourceStack source, Collection<ServerPlayer> targets, int level) {
-        for (ServerPlayer player : targets) {
-            LevelUpApi.setLevel(player, level);
-        }
-        source.sendSuccess(() -> Component.literal("Set LevelUP level to " + level + " for " + targets.size() + " player(s)."), true);
-        return targets.size();
-    }
-
-    private static int spawnOrb(CommandSourceStack source, int amount, Vec3 pos) {
-        LevelUpApi.spawnLevelUpXpOrb(source.getLevel(), pos, amount);
-        source.sendSuccess(() -> Component.literal("Spawned LevelUP orb reward for " + amount + " XP."), true);
-        return 1;
-    }
-
-    private static int spawnOrbLevel(CommandSourceStack source, int level, Vec3 pos) {
-        long xpValue = LevelUpApi.getTotalXpForLevel(level);
-        if (xpValue <= 0L) {
-            source.sendSuccess(() -> Component.literal("Level " + level + " resolves to 0 LevelUP XP."), false);
-            return 1;
-        }
-
-        LevelUpApi.spawnLevelUpXpOrbForLevel(source.getLevel(), pos, level);
-        source.sendSuccess(() -> Component.literal("Spawned LevelUP orb reward for level " + level + " (" + xpValue + " XP)."), true);
-        return 1;
-    }
-
-    private static int levelReset(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        ServerPlayer player = source.getPlayerOrException();
-        LevelUpApi.setLevel(player, 0);
-        LevelUpApi.setXp(player, 0L);
-        source.sendSuccess(() -> Component.literal("Level reset to 0."), false);
-        return 1;
-    }
-
-    private static int levelSet(CommandSourceStack source, int value) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        ServerPlayer player = source.getPlayerOrException();
-        LevelUpApi.setLevel(player, value);
-        source.sendSuccess(() -> Component.literal("Level set to " + LevelUpApi.getLevel(player) + "."), false);
-        return 1;
-    }
-
-    private static int levelAdd(CommandSourceStack source, int value) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        ServerPlayer player = source.getPlayerOrException();
-        int nextLevel = Math.max(0, LevelUpApi.getLevel(player) + value);
+    private static int addLevel(CommandSourceStack source, ServerPlayer player, int amount) {
+        int nextLevel = Math.max(0, LevelUpApi.getLevel(player) + amount);
         LevelUpApi.setLevel(player, nextLevel);
-        source.sendSuccess(() -> Component.literal("Level is now " + LevelUpApi.getLevel(player) + "."), false);
+        source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " is now level " + LevelUpApi.getLevel(player) + "."), true);
         return 1;
     }
 
-    private static int getLevelMultiplier(CommandSourceStack source) {
-        double current = LevelUpConfig.COMMON.levelMultiplier.get();
-        source.sendSuccess(() -> Component.literal("Current LevelUP XP level multiplier: " + current), false);
+    private static int addMultiplier(CommandSourceStack source, ServerPlayer player, int amount) {
+        int nextMultiplier = Math.max(0, LevelUpApi.getXpMultiplier(player) + amount);
+        LevelUpApi.setXpMultiplier(player, nextMultiplier);
+        source.sendSuccess(() -> Component.literal("Set " + player.getGameProfile().getName() + " multiplier to " + nextMultiplier + "."), true);
+        return nextMultiplier;
+    }
+
+    private static int setXp(CommandSourceStack source, ServerPlayer player, long amount) {
+        LevelUpApi.setXp(player, amount);
+        source.sendSuccess(() -> Component.literal("Set " + player.getGameProfile().getName() + " XP to " + amount + "."), true);
         return 1;
     }
 
-    private static int setLevelMultiplier(CommandSourceStack source, double value) {
-        LevelUpConfig.COMMON.levelMultiplier.set(value);
-        source.sendSuccess(() -> Component.literal("Set LevelUP XP level multiplier to " + value + "."), true);
+    private static int setLevel(CommandSourceStack source, ServerPlayer player, int amount) {
+        LevelUpApi.setLevel(player, amount);
+        source.sendSuccess(() -> Component.literal("Set " + player.getGameProfile().getName() + " level to " + LevelUpApi.getLevel(player) + "."), true);
+        return 1;
+    }
+
+    private static int setMultiplier(CommandSourceStack source, ServerPlayer player, int amount) {
+        LevelUpApi.setXpMultiplier(player, amount);
+        source.sendSuccess(() -> Component.literal("Set " + player.getGameProfile().getName() + " multiplier to " + amount + "."), true);
+        return amount;
+    }
+
+    private static int reset(CommandSourceStack source, ServerPlayer player) {
+        LevelUpApi.setXpMultiplier(player, 1);
+        LevelUpApi.setXp(player, 0L);
+        source.sendSuccess(() -> Component.literal("Reset LevelUP data for " + player.getGameProfile().getName() + "."), true);
+        return 1;
+    }
+
+    private static int spawnOrbs(CommandSourceStack source, int amount) {
+        LevelUpApi.spawnLevelUpXpOrb(source.getLevel(), source.getPosition(), amount);
+        source.sendSuccess(() -> Component.literal("Spawned LevelUP orbs worth " + amount + " XP."), true);
+        return 1;
+    }
+
+    private static int setPaused(CommandSourceStack source, boolean value) {
+        LevelUpApi.setPaused(value);
+        source.sendSuccess(() -> Component.literal("LevelUP XP gains are now " + (value ? "paused" : "active") + "."), true);
+        return value ? 1 : 0;
+    }
+
+    private static int query(CommandSourceStack source, ServerPlayer player) {
+        source.sendSuccess(() -> Component.literal(
+                player.getGameProfile().getName()
+                        + " -> level=" + LevelUpApi.getLevel(player)
+                        + ", xp=" + LevelUpApi.getXp(player)
+                        + ", multiplier=" + LevelUpApi.getXpMultiplier(player)
+                        + ", paused=" + LevelUpApi.isPaused()
+        ), false);
         return 1;
     }
 }

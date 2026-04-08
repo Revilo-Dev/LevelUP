@@ -15,6 +15,8 @@ public interface ILevelUpService {
 
     long getXp(Player player);
 
+    int getXpMultiplier(Player player);
+
     long getXpIntoCurrentLevel(Player player);
 
     long getXpNeededForNextLevel(Player player);
@@ -36,6 +38,12 @@ public interface ILevelUpService {
     void setXp(ServerPlayer player, long xp);
 
     void setLevel(ServerPlayer player, int level);
+
+    void setXpMultiplier(ServerPlayer player, int multiplier);
+
+    boolean isPaused();
+
+    void setPaused(boolean paused);
 
     void setMaxLevelOverride(int maxLevel);
 

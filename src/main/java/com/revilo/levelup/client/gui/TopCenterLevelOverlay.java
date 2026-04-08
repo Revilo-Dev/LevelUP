@@ -1,6 +1,7 @@
 package com.revilo.levelup.client.gui;
 
 import com.revilo.levelup.LevelUpMod;
+import com.revilo.levelup.api.LevelUpApi;
 import com.revilo.levelup.config.LevelUpClientConfig;
 import com.revilo.levelup.data.LevelFormula;
 import net.minecraft.Util;
@@ -9,18 +10,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 
 public final class TopCenterLevelOverlay {
-    private static final ResourceLocation BAR_BACKGROUND =
-            ResourceLocation.fromNamespaceAndPath("gui", "skill_bar/xp-bar-background.png");
-    private static final ResourceLocation BAR_PROGRESS =
-            ResourceLocation.fromNamespaceAndPath("gui", "skill_bar/xp-bar-progress.png");
     private static final ResourceLocation HUD_LAYER_ID =
             ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "top_center_level_overlay");
-    private static final int BAR_WIDTH = 184;
-    private static final int BAR_HEIGHT = 11;
     private static final int TOP_MARGIN = 18;
-    private static final int SLIDE_OFFSET = BAR_HEIGHT + 18;
+    private static final int BOTTOM_MARGIN = 29;
+    private static final int SLIDE_OFFSET = LevelBarRenderer.BAR_HEIGHT + 18;
     private static final long SLIDE_IN_MILLIS = 150L;
     private static final long SLIDE_OUT_MILLIS = 400L;
     private static final long HOLD_MILLIS = 1200L;
@@ -35,6 +32,9 @@ public final class TopCenterLevelOverlay {
     private static long progressAnimationEndsAt;
     private static long visibleStartedAt;
     private static long visibleUntil;
+    private static long customVisibleUntil;
+    private static float customProgress;
+    private static Component customLabel;
 
     private TopCenterLevelOverlay() {}
 
@@ -69,16 +69,26 @@ public final class TopCenterLevelOverlay {
         }
 
         boolean wasHidden = now >= visibleUntil;
-        long currentDisplayedXp = getDisplayedXp(now);
+        long currentDisplayedXp = usesBottomHud() ? safeNewXp : getDisplayedXp(now);
         startXp = currentDisplayedXp;
         displayedXp = currentDisplayedXp;
         targetXp = safeNewXp;
         progressAnimationStartedAt = now;
-        progressAnimationEndsAt = now + getAnimationDuration(currentDisplayedXp, safeNewXp);
+        progressAnimationEndsAt = usesBottomHud() ? now : now + getAnimationDuration(currentDisplayedXp, safeNewXp);
         if (wasHidden) {
             visibleStartedAt = now;
         }
         visibleUntil = progressAnimationEndsAt + HOLD_MILLIS;
+    }
+
+    public static void showCustom(Component label, float progress, long durationMillis) {
+        long now = Util.getMillis();
+        customLabel = label;
+        customProgress = Math.max(0.0F, Math.min(1.0F, progress));
+        customVisibleUntil = Math.max(customVisibleUntil, now + Math.max(0L, durationMillis));
+        if (now >= visibleUntil) {
+            visibleStartedAt = now;
+        }
     }
 
     public static void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
@@ -91,30 +101,17 @@ public final class TopCenterLevelOverlay {
         }
 
         long now = Util.getMillis();
-        if (!initialized || now >= visibleUntil) {
+        if (!shouldRender(now, minecraft.player)) {
             return;
         }
 
-        long xp = getDisplayedXp(now);
-        int maxLevel = Math.max(1, LevelFormula.getConfiguredMaxLevel());
-        int level = LevelFormula.levelForXp(xp, maxLevel);
-        long currentFloor = LevelFormula.totalXpForLevel(level);
-        long nextCost = Math.max(1L, LevelFormula.xpForNextLevel(level));
-        float progress = (float) Math.min(1.0D, Math.max(0.0D, (double) (xp - currentFloor) / (double) nextCost));
-        int progressWidth = Math.max(0, Math.min(BAR_WIDTH, Math.round(progress * BAR_WIDTH)));
-
-        int x = (minecraft.getWindow().getGuiScaledWidth() - BAR_WIDTH) / 2;
-        int y = TOP_MARGIN + getAnimatedYOffset(now);
-        int textColor = 0xFF3B9DFF;
-
-        guiGraphics.blit(BAR_BACKGROUND, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
-        if (progressWidth > 0) {
-            guiGraphics.blit(BAR_PROGRESS, x, y, 0, 0, progressWidth, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
-        }
-
-        Component label = Component.translatable("levelup.ui.level", level);
-        int textWidth = minecraft.font.width(label);
-        guiGraphics.drawString(minecraft.font, label, x + (BAR_WIDTH - textWidth) / 2, y - 10, textColor, false);
+        HudSnapshot snapshot = resolveSnapshot(now, minecraft.player);
+        int x = (minecraft.getWindow().getGuiScaledWidth() - LevelBarRenderer.BAR_WIDTH) / 2;
+        boolean bottomHud = usesBottomHud();
+        int y = bottomHud
+                ? minecraft.getWindow().getGuiScaledHeight() - BOTTOM_MARGIN
+                : TOP_MARGIN + getAnimatedYOffset(now);
+        LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), !bottomHud);
     }
 
     private static long getDisplayedXp(long now) {
@@ -139,6 +136,9 @@ public final class TopCenterLevelOverlay {
     }
 
     private static int getAnimatedYOffset(long now) {
+        if (usesBottomHud() || LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get()) {
+            return 0;
+        }
         if (now < visibleStartedAt + SLIDE_IN_MILLIS) {
             float progress = (float) (now - visibleStartedAt) / (float) SLIDE_IN_MILLIS;
             float clampedProgress = Math.max(0.0F, Math.min(1.0F, progress));
@@ -157,4 +157,40 @@ public final class TopCenterLevelOverlay {
         }
         return -SLIDE_OFFSET;
     }
+
+    private static boolean shouldRender(long now, Player player) {
+        if (LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get()) {
+            return true;
+        }
+        return (initialized && now < visibleUntil) || now < customVisibleUntil;
+    }
+
+    private static HudSnapshot resolveSnapshot(long now, Player player) {
+        if (now < customVisibleUntil && customLabel != null) {
+            return new HudSnapshot(customProgress, customLabel);
+        }
+
+        if (LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get() || usesBottomHud()) {
+            return new HudSnapshot(
+                    LevelUpApi.getProgressToNextLevel(player),
+                    usesBottomHud()
+                            ? Component.literal(Integer.toString(LevelUpApi.getLevel(player)))
+                            : Component.translatable("levelup.ui.level", LevelUpApi.getLevel(player))
+            );
+        }
+
+        long xp = getDisplayedXp(now);
+        int maxLevel = Math.max(1, LevelFormula.getConfiguredMaxLevel());
+        int level = LevelFormula.levelForXp(xp, maxLevel);
+        long currentFloor = LevelFormula.totalXpForLevel(level);
+        long nextCost = Math.max(1L, LevelFormula.xpForNextLevel(level));
+        float progress = (float) Math.min(1.0D, Math.max(0.0D, (double) (xp - currentFloor) / (double) nextCost));
+        return new HudSnapshot(progress, Component.translatable("levelup.ui.level", level));
+    }
+
+    private static boolean usesBottomHud() {
+        return "bottom".equalsIgnoreCase(LevelUpClientConfig.CLIENT.levelHudPosition.get());
+    }
+
+    private record HudSnapshot(float progress, Component label) {}
 }

@@ -27,6 +27,10 @@ public final class LevelUpApi {
         return SERVICE.getXp(player);
     }
 
+    public static int getXpMultiplier(Player player) {
+        return SERVICE.getXpMultiplier(player);
+    }
+
     public static long getXpIntoCurrentLevel(Player player) {
         return SERVICE.getXpIntoCurrentLevel(player);
     }
@@ -73,6 +77,18 @@ public final class LevelUpApi {
 
     public static void setLevel(ServerPlayer player, int level) {
         SERVICE.setLevel(player, level);
+    }
+
+    public static void setXpMultiplier(ServerPlayer player, int multiplier) {
+        SERVICE.setXpMultiplier(player, multiplier);
+    }
+
+    public static boolean isPaused() {
+        return SERVICE.isPaused();
+    }
+
+    public static void setPaused(boolean paused) {
+        SERVICE.setPaused(paused);
     }
 
     public static void setMaxLevelOverride(int maxLevel) {

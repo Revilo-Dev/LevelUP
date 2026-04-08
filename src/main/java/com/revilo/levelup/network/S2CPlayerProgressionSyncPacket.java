@@ -12,19 +12,21 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record S2CPlayerProgressionSyncPacket(int level, long xp) implements CustomPacketPayload {
+public record S2CPlayerProgressionSyncPacket(int level, long xp, int multiplier, boolean showOverlay) implements CustomPacketPayload {
     public static final Type<S2CPlayerProgressionSyncPacket> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "sync_player_progression"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CPlayerProgressionSyncPacket> STREAM_CODEC =
             CustomPacketPayload.codec(S2CPlayerProgressionSyncPacket::write, S2CPlayerProgressionSyncPacket::new);
 
     private S2CPlayerProgressionSyncPacket(RegistryFriendlyByteBuf buffer) {
-        this(buffer.readVarInt(), buffer.readVarLong());
+        this(buffer.readVarInt(), buffer.readVarLong(), buffer.readVarInt(), buffer.readBoolean());
     }
 
     private void write(RegistryFriendlyByteBuf buffer) {
         buffer.writeVarInt(level);
         buffer.writeVarLong(xp);
+        buffer.writeVarInt(multiplier);
+        buffer.writeBoolean(showOverlay);
     }
 
     @Override
@@ -39,7 +41,8 @@ public record S2CPlayerProgressionSyncPacket(int level, long xp) implements Cust
             long oldXp = data.getXp();
             data.setLevel(payload.level());
             data.setXp(payload.xp());
-            if (FMLEnvironment.dist == Dist.CLIENT) {
+            data.setMultiplier(payload.multiplier());
+            if (payload.showOverlay() && FMLEnvironment.dist == Dist.CLIENT) {
                 ClientHooks.onProgressionUpdated(oldXp, payload.xp());
             }
         });
