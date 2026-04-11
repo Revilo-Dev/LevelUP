@@ -7,8 +7,10 @@ It provides a public API and event hooks so other mods can read player level, gr
 
 - Separate LevelUP XP and level progression from vanilla XP.
 - Configurable XP curve, max level cap, hostile mob XP drops, and tagged mob XP drops.
+- Eligible mob kills drop LevelUP XP as `sources.mobKillXp + vanilla mob XP reward`.
 - Server-side LevelUP XP orb entity and pickup flow.
 - Animated top-center HUD overlay for LevelUP XP gain feedback that stays active during chained XP gains, slides down from off-screen when shown, and slides back up when finished.
+- Optional always-on HUD mode that keeps the level bar in the same on-screen position as the temporary overlay.
 - Commands for admins to grant XP and manage progression values.
 - Includes a `test_skill_orb` item that grants LevelUP XP on use.
 - Integration hooks for external mods through static API calls and NeoForge events.
@@ -31,11 +33,14 @@ Client config:
 
 - `hud.showTopCenterLevelOverlay` default `true`
   Controls the LevelUP HUD display.
+- `hud.showTemporaryLevelOverlay` default `true`
+  Controls temporary LevelUP HUD popups from XP updates and custom HUD events.
 - `hud.levelHudPosition` default `top`
   Accepts `top` or `bottom`.
   `bottom` replaces the vanilla XP bar while the LevelUP HUD is active and skips the progress animation.
 - `hud.levelHudStayOnScreen` default `false`
   Keeps the LevelUP HUD visible even when no XP gain is currently animating.
+  Uses the same animated top HUD bar and keeps it visible until this option is turned off, then it slides out normally.
 - `hud.levelHudColor` default `#53a4bc`
   Tint color for the LevelUP progress fill and level text.
 - `hud.showInventoryLevelBar` default `true`
@@ -67,6 +72,7 @@ Spawn eggs or other spawn systems can do the same by setting the spawned entity 
 - `/levels reset <id>`
 - `/levels spawnorbs <amount>`
 - `/levels pause <true|false>`
+- `/levels max <value>`
 - `/levels query <id>`
 
 ## Included Content
@@ -124,7 +130,6 @@ All events are posted on `NeoForge.EVENT_BUS`.
 Use `com.revilo.levelup.api.LevelUpSources` constants when possible:
 
 - `UNKNOWN`
-- `VANILLA_XP`
 - `MOB_KILL`
 - `GATEWAY_COMPLETE`
 - `QUEST_COMPLETE`

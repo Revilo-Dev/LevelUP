@@ -35,6 +35,7 @@ public final class TopCenterLevelOverlay {
     private static long customVisibleUntil;
     private static float customProgress;
     private static Component customLabel;
+    private static boolean lastStayOnScreen;
 
     private TopCenterLevelOverlay() {}
 
@@ -45,6 +46,7 @@ public final class TopCenterLevelOverlay {
     public static void onProgressionUpdated(long oldXp, long newXp) {
         long now = Util.getMillis();
         long safeNewXp = Math.max(0L, newXp);
+        boolean temporaryOverlayEnabled = isTemporaryOverlayEnabled();
         if (!initialized) {
             initialized = true;
             startXp = safeNewXp;
@@ -69,19 +71,24 @@ public final class TopCenterLevelOverlay {
         }
 
         boolean wasHidden = now >= visibleUntil;
-        long currentDisplayedXp = usesBottomHud() ? safeNewXp : getDisplayedXp(now);
+        long currentDisplayedXp = usesBottomHud() || !temporaryOverlayEnabled ? safeNewXp : getDisplayedXp(now);
         startXp = currentDisplayedXp;
         displayedXp = currentDisplayedXp;
         targetXp = safeNewXp;
         progressAnimationStartedAt = now;
-        progressAnimationEndsAt = usesBottomHud() ? now : now + getAnimationDuration(currentDisplayedXp, safeNewXp);
+        progressAnimationEndsAt = usesBottomHud() || !temporaryOverlayEnabled
+                ? now
+                : now + getAnimationDuration(currentDisplayedXp, safeNewXp);
         if (wasHidden) {
             visibleStartedAt = now;
         }
-        visibleUntil = progressAnimationEndsAt + HOLD_MILLIS;
+        visibleUntil = temporaryOverlayEnabled ? progressAnimationEndsAt + HOLD_MILLIS : now;
     }
 
     public static void showCustom(Component label, float progress, long durationMillis) {
+        if (!isTemporaryOverlayEnabled()) {
+            return;
+        }
         long now = Util.getMillis();
         customLabel = label;
         customProgress = Math.max(0.0F, Math.min(1.0F, progress));
@@ -101,16 +108,22 @@ public final class TopCenterLevelOverlay {
         }
 
         long now = Util.getMillis();
+        boolean stayOnScreen = LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get();
+        if (lastStayOnScreen && !stayOnScreen) {
+            visibleUntil = Math.max(visibleUntil, now + SLIDE_OUT_MILLIS);
+        }
+        lastStayOnScreen = stayOnScreen;
+
         if (!shouldRender(now, minecraft.player)) {
             return;
         }
 
         HudSnapshot snapshot = resolveSnapshot(now, minecraft.player);
         int x = (minecraft.getWindow().getGuiScaledWidth() - LevelBarRenderer.BAR_WIDTH) / 2;
-        boolean bottomHud = usesBottomHud();
+        boolean bottomHud = usesBottomHud() && !LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get();
         int y = bottomHud
                 ? minecraft.getWindow().getGuiScaledHeight() - BOTTOM_MARGIN
-                : TOP_MARGIN + getAnimatedYOffset(now);
+                : getTopHudY(now);
         LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), !bottomHud);
     }
 
@@ -136,13 +149,16 @@ public final class TopCenterLevelOverlay {
     }
 
     private static int getAnimatedYOffset(long now) {
-        if (usesBottomHud() || LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get()) {
+        if (usesBottomHud() || !isTemporaryOverlayEnabled()) {
             return 0;
         }
         if (now < visibleStartedAt + SLIDE_IN_MILLIS) {
             float progress = (float) (now - visibleStartedAt) / (float) SLIDE_IN_MILLIS;
             float clampedProgress = Math.max(0.0F, Math.min(1.0F, progress));
             return Math.round((1.0F - clampedProgress) * -SLIDE_OFFSET);
+        }
+        if (LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get()) {
+            return 0;
         }
         if (now > visibleUntil - SLIDE_OUT_MILLIS) {
             float progress = (float) (visibleUntil - now) / (float) SLIDE_OUT_MILLIS;
@@ -162,20 +178,31 @@ public final class TopCenterLevelOverlay {
         if (LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get()) {
             return true;
         }
+        if (!isTemporaryOverlayEnabled()) {
+            return false;
+        }
         return (initialized && now < visibleUntil) || now < customVisibleUntil;
     }
 
     private static HudSnapshot resolveSnapshot(long now, Player player) {
-        if (now < customVisibleUntil && customLabel != null) {
+        if (isTemporaryOverlayEnabled() && now < customVisibleUntil && customLabel != null) {
             return new HudSnapshot(customProgress, customLabel);
         }
 
-        if (LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get() || usesBottomHud()) {
+        boolean bottomHud = usesBottomHud() && !LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get();
+        if (bottomHud) {
             return new HudSnapshot(
                     LevelUpApi.getProgressToNextLevel(player),
-                    usesBottomHud()
+                    bottomHud
                             ? Component.literal(Integer.toString(LevelUpApi.getLevel(player)))
                             : Component.translatable("levelup.ui.level", LevelUpApi.getLevel(player))
+            );
+        }
+
+        if (!initialized) {
+            return new HudSnapshot(
+                    LevelUpApi.getProgressToNextLevel(player),
+                    Component.translatable("levelup.ui.level", LevelUpApi.getLevel(player))
             );
         }
 
@@ -190,6 +217,14 @@ public final class TopCenterLevelOverlay {
 
     private static boolean usesBottomHud() {
         return "bottom".equalsIgnoreCase(LevelUpClientConfig.CLIENT.levelHudPosition.get());
+    }
+
+    private static int getTopHudY(long now) {
+        return TOP_MARGIN + getAnimatedYOffset(now);
+    }
+
+    private static boolean isTemporaryOverlayEnabled() {
+        return LevelUpClientConfig.CLIENT.showTemporaryLevelOverlay.get();
     }
 
     private record HudSnapshot(float progress, Component label) {}

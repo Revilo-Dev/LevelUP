@@ -16,6 +16,7 @@ public final class LevelUpClientConfig {
 
     public static final class Client {
         public final ModConfigSpec.BooleanValue showTopCenterLevelOverlay;
+        public final ModConfigSpec.BooleanValue showTemporaryLevelOverlay;
         public final ModConfigSpec.BooleanValue showInventoryLevelBar;
         public final ModConfigSpec.ConfigValue<String> levelHudPosition;
         public final ModConfigSpec.BooleanValue levelHudStayOnScreen;
@@ -25,6 +26,8 @@ public final class LevelUpClientConfig {
             builder.push("hud");
             showTopCenterLevelOverlay = builder.comment("Show an animated LevelUP progress bar at the top center of the HUD when LevelUP XP increases.")
                     .define("showTopCenterLevelOverlay", true);
+            showTemporaryLevelOverlay = builder.comment("Show temporary LevelUP HUD popups from XP updates/custom HUD events.")
+                    .define("showTemporaryLevelOverlay", true);
             levelHudPosition = builder.comment("Where to draw the LevelUP HUD: top or bottom.")
                     .define("levelHudPosition", "top", value -> value instanceof String string && isValidPosition(string));
             levelHudStayOnScreen = builder.comment("Keep the LevelUP HUD visible even when no recent XP gain is animating.")

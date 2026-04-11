@@ -92,6 +92,12 @@ public final class LevelUpCommands {
                                                 ctx.getSource(),
                                                 BoolArgumentType.getBool(ctx, "value")
                                         ))))
+                        .then(Commands.literal("max")
+                                .then(Commands.argument("value", IntegerArgumentType.integer(1))
+                                        .executes(ctx -> setMaxLevel(
+                                                ctx.getSource(),
+                                                IntegerArgumentType.getInteger(ctx, "value")
+                                        ))))
                         .then(Commands.literal("query")
                                 .then(Commands.argument("id", EntityArgument.player())
                                         .executes(ctx -> query(
@@ -158,12 +164,19 @@ public final class LevelUpCommands {
         return value ? 1 : 0;
     }
 
+    private static int setMaxLevel(CommandSourceStack source, int value) {
+        LevelUpApi.setMaxLevelOverride(value);
+        source.sendSuccess(() -> Component.literal("Set LevelUP max level to " + LevelUpApi.getMaxLevel() + "."), true);
+        return LevelUpApi.getMaxLevel();
+    }
+
     private static int query(CommandSourceStack source, ServerPlayer player) {
         source.sendSuccess(() -> Component.literal(
                 player.getGameProfile().getName()
                         + " -> level=" + LevelUpApi.getLevel(player)
                         + ", xp=" + LevelUpApi.getXp(player)
                         + ", multiplier=" + LevelUpApi.getXpMultiplier(player)
+                        + ", max=" + LevelUpApi.getMaxLevel()
                         + ", paused=" + LevelUpApi.isPaused()
         ), false);
         return 1;
