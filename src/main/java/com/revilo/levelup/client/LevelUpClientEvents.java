@@ -12,6 +12,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ContainerScreenEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
 public final class LevelUpClientEvents {
@@ -37,6 +38,14 @@ public final class LevelUpClientEvents {
         @SubscribeEvent
         public static void onHudDisplay(LevelUpHudDisplayEvent event) {
             TopCenterLevelOverlay.showCustom(event.getLabel(), event.getProgress(), event.getDurationMillis());
+        }
+
+        @SubscribeEvent
+        public static void onRenderGuiLayerPre(RenderGuiLayerEvent.Pre event) {
+            if (event.getName().equals(VanillaGuiLayers.EXPERIENCE_BAR)
+                    && TopCenterLevelOverlay.shouldHideVanillaExperienceBar()) {
+                event.setCanceled(true);
+            }
         }
     }
 }

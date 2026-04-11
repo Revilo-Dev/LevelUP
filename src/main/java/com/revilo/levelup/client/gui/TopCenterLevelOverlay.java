@@ -120,11 +120,26 @@ public final class TopCenterLevelOverlay {
 
         HudSnapshot snapshot = resolveSnapshot(now, minecraft.player);
         int x = (minecraft.getWindow().getGuiScaledWidth() - LevelBarRenderer.BAR_WIDTH) / 2;
-        boolean bottomHud = usesBottomHud() && !LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get();
+        boolean bottomHud = usesBottomHud();
         int y = bottomHud
                 ? minecraft.getWindow().getGuiScaledHeight() - BOTTOM_MARGIN
                 : getTopHudY(now);
         LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), !bottomHud);
+    }
+
+    public static boolean shouldHideVanillaExperienceBar() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || minecraft.options.hideGui || minecraft.screen != null) {
+            return false;
+        }
+        if (!LevelUpClientConfig.CLIENT.showTopCenterLevelOverlay.get()) {
+            return false;
+        }
+        if (!usesBottomHud()) {
+            return false;
+        }
+        long now = Util.getMillis();
+        return shouldRender(now, minecraft.player);
     }
 
     private static long getDisplayedXp(long now) {
@@ -178,6 +193,9 @@ public final class TopCenterLevelOverlay {
         if (LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get()) {
             return true;
         }
+        if (usesBottomHud()) {
+            return true;
+        }
         if (!isTemporaryOverlayEnabled()) {
             return false;
         }
@@ -189,7 +207,7 @@ public final class TopCenterLevelOverlay {
             return new HudSnapshot(customProgress, customLabel);
         }
 
-        boolean bottomHud = usesBottomHud() && !LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get();
+        boolean bottomHud = usesBottomHud();
         if (bottomHud) {
             return new HudSnapshot(
                     LevelUpApi.getProgressToNextLevel(player),

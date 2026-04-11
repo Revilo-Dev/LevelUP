@@ -11,6 +11,7 @@ It provides a public API and event hooks so other mods can read player level, gr
 - Server-side LevelUP XP orb entity and pickup flow.
 - Animated top-center HUD overlay for LevelUP XP gain feedback that stays active during chained XP gains, slides down from off-screen when shown, and slides back up when finished.
 - Optional always-on HUD mode that keeps the level bar in the same on-screen position as the temporary overlay.
+- Bottom HUD mode can replace the vanilla XP bar with a persistent LevelUP bar while the HUD is enabled.
 - Commands for admins to grant XP and manage progression values.
 - Includes a `test_skill_orb` item that grants LevelUP XP on use.
 - Integration hooks for external mods through static API calls and NeoForge events.
@@ -37,7 +38,7 @@ Client config:
   Controls temporary LevelUP HUD popups from XP updates and custom HUD events.
 - `hud.levelHudPosition` default `top`
   Accepts `top` or `bottom`.
-  `bottom` replaces the vanilla XP bar while the LevelUP HUD is active and skips the progress animation.
+  `bottom` replaces the vanilla XP bar with a persistent LevelUP bar in normal HUD gameplay and skips the top progress animation.
 - `hud.levelHudStayOnScreen` default `false`
   Keeps the LevelUP HUD visible even when no XP gain is currently animating.
   Uses the same animated top HUD bar and keeps it visible until this option is turned off, then it slides out normally.
