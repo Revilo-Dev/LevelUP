@@ -16,7 +16,7 @@ public final class TopCenterLevelOverlay {
     private static final ResourceLocation HUD_LAYER_ID =
             ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "top_center_level_overlay");
     private static final int TOP_MARGIN = 18;
-    private static final int BOTTOM_MARGIN = 29;
+    private static final int BOTTOM_MARGIN = 32;
     private static final int SLIDE_OFFSET = LevelBarRenderer.BAR_HEIGHT + 18;
     private static final long SLIDE_IN_MILLIS = 150L;
     private static final long SLIDE_OUT_MILLIS = 400L;
@@ -36,6 +36,8 @@ public final class TopCenterLevelOverlay {
     private static float customProgress;
     private static Component customLabel;
     private static boolean lastStayOnScreen;
+    private static Boolean eventStayOnScreenOverride;
+    private static String eventHudPosition;
 
     private TopCenterLevelOverlay() {}
 
@@ -98,9 +100,24 @@ public final class TopCenterLevelOverlay {
         }
     }
 
+    public static void setEventStayOnScreenLock(boolean lockEnabled) {
+        long now = Util.getMillis();
+        boolean wasStaying = isStayOnScreenActive();
+        eventStayOnScreenOverride = lockEnabled;
+        boolean isStaying = isStayOnScreenActive();
+        if (wasStaying && !isStaying) {
+            visibleUntil = Math.max(visibleUntil, now + SLIDE_OUT_MILLIS);
+        }
+        lastStayOnScreen = isStaying;
+    }
+
+    public static void setEventHudPosition(String position) {
+        eventHudPosition = position;
+    }
+
     public static void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.options.hideGui || minecraft.screen != null) {
+        if (minecraft.player == null || minecraft.options.hideGui) {
             return;
         }
         if (!LevelUpClientConfig.CLIENT.showTopCenterLevelOverlay.get()) {
@@ -108,7 +125,7 @@ public final class TopCenterLevelOverlay {
         }
 
         long now = Util.getMillis();
-        boolean stayOnScreen = LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get();
+        boolean stayOnScreen = isStayOnScreenActive();
         if (lastStayOnScreen && !stayOnScreen) {
             visibleUntil = Math.max(visibleUntil, now + SLIDE_OUT_MILLIS);
         }
@@ -121,25 +138,25 @@ public final class TopCenterLevelOverlay {
         HudSnapshot snapshot = resolveSnapshot(now, minecraft.player);
         int x = (minecraft.getWindow().getGuiScaledWidth() - LevelBarRenderer.BAR_WIDTH) / 2;
         boolean bottomHud = usesBottomHud();
+        if (bottomHud) {
+            x -= 1;
+        }
         int y = bottomHud
                 ? minecraft.getWindow().getGuiScaledHeight() - BOTTOM_MARGIN
                 : getTopHudY(now);
-        LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), !bottomHud);
+        int labelYOffset = bottomHud ? 2 : 0;
+        float alpha = bottomHud ? getBottomHudAlpha(now) : 1.0F;
+        if (alpha <= 0.0F) {
+            return;
+        }
+        LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), !bottomHud, labelYOffset, !bottomHud, alpha);
     }
 
     public static boolean shouldHideVanillaExperienceBar() {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.options.hideGui || minecraft.screen != null) {
-            return false;
-        }
         if (!LevelUpClientConfig.CLIENT.showTopCenterLevelOverlay.get()) {
             return false;
         }
-        if (!usesBottomHud()) {
-            return false;
-        }
-        long now = Util.getMillis();
-        return shouldRender(now, minecraft.player);
+        return usesBottomHud();
     }
 
     private static long getDisplayedXp(long now) {
@@ -167,13 +184,13 @@ public final class TopCenterLevelOverlay {
         if (usesBottomHud() || !isTemporaryOverlayEnabled()) {
             return 0;
         }
+        if (isStayOnScreenActive()) {
+            return 0;
+        }
         if (now < visibleStartedAt + SLIDE_IN_MILLIS) {
             float progress = (float) (now - visibleStartedAt) / (float) SLIDE_IN_MILLIS;
             float clampedProgress = Math.max(0.0F, Math.min(1.0F, progress));
             return Math.round((1.0F - clampedProgress) * -SLIDE_OFFSET);
-        }
-        if (LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get()) {
-            return 0;
         }
         if (now > visibleUntil - SLIDE_OUT_MILLIS) {
             float progress = (float) (visibleUntil - now) / (float) SLIDE_OUT_MILLIS;
@@ -190,10 +207,7 @@ public final class TopCenterLevelOverlay {
     }
 
     private static boolean shouldRender(long now, Player player) {
-        if (LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get()) {
-            return true;
-        }
-        if (usesBottomHud()) {
+        if (isStayOnScreenActive()) {
             return true;
         }
         if (!isTemporaryOverlayEnabled()) {
@@ -234,7 +248,8 @@ public final class TopCenterLevelOverlay {
     }
 
     private static boolean usesBottomHud() {
-        return "bottom".equalsIgnoreCase(LevelUpClientConfig.CLIENT.levelHudPosition.get());
+        String position = eventHudPosition != null ? eventHudPosition : LevelUpClientConfig.CLIENT.levelHudPosition.get();
+        return "bottom".equalsIgnoreCase(position);
     }
 
     private static int getTopHudY(long now) {
@@ -243,6 +258,31 @@ public final class TopCenterLevelOverlay {
 
     private static boolean isTemporaryOverlayEnabled() {
         return LevelUpClientConfig.CLIENT.showTemporaryLevelOverlay.get();
+    }
+
+    private static float getBottomHudAlpha(long now) {
+        if (!usesBottomHud()) {
+            return 1.0F;
+        }
+        if (isStayOnScreenActive() || !isTemporaryOverlayEnabled()) {
+            return 1.0F;
+        }
+        long activeUntil = Math.max(visibleUntil, customVisibleUntil);
+        if (now >= activeUntil) {
+            return 0.0F;
+        }
+        long fadeStart = activeUntil - SLIDE_OUT_MILLIS;
+        if (now <= fadeStart) {
+            return 1.0F;
+        }
+        float progress = (float) (activeUntil - now) / (float) SLIDE_OUT_MILLIS;
+        return Math.max(0.0F, Math.min(1.0F, progress));
+    }
+
+    private static boolean isStayOnScreenActive() {
+        return eventStayOnScreenOverride != null
+                ? eventStayOnScreenOverride
+                : LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get();
     }
 
     private record HudSnapshot(float progress, Component label) {}

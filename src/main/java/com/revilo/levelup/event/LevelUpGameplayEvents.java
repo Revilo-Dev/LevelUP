@@ -6,6 +6,8 @@ import com.revilo.levelup.config.LevelUpConfig;
 import com.revilo.levelup.registry.LevelUpTags;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Enemy;
@@ -47,7 +49,11 @@ public final class LevelUpGameplayEvents {
         if (!(deadEntity.level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        if (!(deadEntity.getKillCredit() instanceof ServerPlayer killer)) {
+        Entity attacker = event.getSource().getEntity();
+        if (!(attacker instanceof ServerPlayer killer)) {
+            return;
+        }
+        if (event.getSource().is(DamageTypes.THORNS)) {
             return;
         }
         if (!shouldDropLevelXp(deadEntity)) {

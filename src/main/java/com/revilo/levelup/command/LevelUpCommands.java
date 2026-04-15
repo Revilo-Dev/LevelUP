@@ -1,16 +1,20 @@
 package com.revilo.levelup.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.revilo.levelup.api.LevelUpApi;
 import com.revilo.levelup.api.LevelUpSources;
+import com.revilo.levelup.event.LevelUpHudPositionEvent;
+import com.revilo.levelup.event.LevelUpHudStayOnScreenEvent;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 public final class LevelUpCommands {
@@ -21,90 +25,106 @@ public final class LevelUpCommands {
     }
 
     private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(
-                Commands.literal("levels")
-                        .requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("add")
-                                .then(Commands.literal("xp")
-                                        .then(Commands.argument("amount", LongArgumentType.longArg(0))
-                                                .then(Commands.argument("id", EntityArgument.player())
-                                                        .executes(ctx -> addXp(
-                                                                ctx.getSource(),
-                                                                EntityArgument.getPlayer(ctx, "id"),
-                                                                LongArgumentType.getLong(ctx, "amount")
-                                                        )))))
-                                .then(Commands.literal("level")
-                                        .then(Commands.argument("amount", IntegerArgumentType.integer())
-                                                .then(Commands.argument("id", EntityArgument.player())
-                                                        .executes(ctx -> addLevel(
-                                                                ctx.getSource(),
-                                                                EntityArgument.getPlayer(ctx, "id"),
-                                                                IntegerArgumentType.getInteger(ctx, "amount")
-                                                        )))))
-                                .then(Commands.literal("multiplier")
-                                        .then(Commands.argument("amount", IntegerArgumentType.integer())
-                                                .then(Commands.argument("id", EntityArgument.player())
-                                                        .executes(ctx -> addMultiplier(
-                                                                ctx.getSource(),
-                                                                EntityArgument.getPlayer(ctx, "id"),
-                                                                IntegerArgumentType.getInteger(ctx, "amount")
-                                                        ))))))
-                        .then(Commands.literal("set")
-                                .then(Commands.literal("xp")
-                                        .then(Commands.argument("amount", LongArgumentType.longArg(0))
-                                                .then(Commands.argument("id", EntityArgument.player())
-                                                        .executes(ctx -> setXp(
-                                                                ctx.getSource(),
-                                                                EntityArgument.getPlayer(ctx, "id"),
-                                                                LongArgumentType.getLong(ctx, "amount")
-                                                        )))))
-                                .then(Commands.literal("level")
-                                        .then(Commands.argument("amount", IntegerArgumentType.integer(0))
-                                                .then(Commands.argument("id", EntityArgument.player())
-                                                        .executes(ctx -> setLevel(
-                                                                ctx.getSource(),
-                                                                EntityArgument.getPlayer(ctx, "id"),
-                                                                IntegerArgumentType.getInteger(ctx, "amount")
-                                                        )))))
-                                .then(Commands.literal("multiplier")
-                                        .then(Commands.argument("amount", IntegerArgumentType.integer(0))
-                                                .then(Commands.argument("id", EntityArgument.player())
-                                                        .executes(ctx -> setMultiplier(
-                                                                ctx.getSource(),
-                                                                EntityArgument.getPlayer(ctx, "id"),
-                                                                IntegerArgumentType.getInteger(ctx, "amount")
-                                                        ))))))
-                        .then(Commands.literal("reset")
-                                .then(Commands.argument("id", EntityArgument.player())
-                                        .executes(ctx -> reset(
-                                                ctx.getSource(),
-                                                EntityArgument.getPlayer(ctx, "id")
-                                        ))))
-                        .then(Commands.literal("spawnorbs")
-                                .then(Commands.argument("amount", IntegerArgumentType.integer(1))
-                                        .executes(ctx -> spawnOrbs(
-                                                ctx.getSource(),
-                                                IntegerArgumentType.getInteger(ctx, "amount")
-                                        ))))
-                        .then(Commands.literal("pause")
-                                .then(Commands.argument("value", BoolArgumentType.bool())
-                                        .executes(ctx -> setPaused(
-                                                ctx.getSource(),
-                                                BoolArgumentType.getBool(ctx, "value")
-                                        ))))
-                        .then(Commands.literal("max")
-                                .then(Commands.argument("value", IntegerArgumentType.integer(1))
-                                        .executes(ctx -> setMaxLevel(
-                                                ctx.getSource(),
-                                                IntegerArgumentType.getInteger(ctx, "value")
-                                        ))))
-                        .then(Commands.literal("query")
-                                .then(Commands.argument("id", EntityArgument.player())
-                                        .executes(ctx -> query(
-                                                ctx.getSource(),
-                                                EntityArgument.getPlayer(ctx, "id")
-                                        ))))
-        );
+        dispatcher.register(buildRoot("levels"));
+        dispatcher.register(buildRoot("level"));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> buildRoot(String rootLiteral) {
+        return Commands.literal(rootLiteral)
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.literal("add")
+                        .then(Commands.literal("xp")
+                                .then(Commands.argument("amount", LongArgumentType.longArg(0))
+                                        .then(Commands.argument("id", EntityArgument.player())
+                                                .executes(ctx -> addXp(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "id"),
+                                                        LongArgumentType.getLong(ctx, "amount")
+                                                )))))
+                        .then(Commands.literal("level")
+                                .then(Commands.argument("amount", IntegerArgumentType.integer())
+                                        .then(Commands.argument("id", EntityArgument.player())
+                                                .executes(ctx -> addLevel(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "id"),
+                                                        IntegerArgumentType.getInteger(ctx, "amount")
+                                                )))))
+                        .then(Commands.literal("multiplier")
+                                .then(Commands.argument("amount", IntegerArgumentType.integer())
+                                        .then(Commands.argument("id", EntityArgument.player())
+                                                .executes(ctx -> addMultiplier(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "id"),
+                                                        IntegerArgumentType.getInteger(ctx, "amount")
+                                                ))))))
+                .then(Commands.literal("set")
+                        .then(Commands.literal("xp")
+                                .then(Commands.argument("amount", LongArgumentType.longArg(0))
+                                        .then(Commands.argument("id", EntityArgument.player())
+                                                .executes(ctx -> setXp(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "id"),
+                                                        LongArgumentType.getLong(ctx, "amount")
+                                                )))))
+                        .then(Commands.literal("level")
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(0))
+                                        .then(Commands.argument("id", EntityArgument.player())
+                                                .executes(ctx -> setLevel(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "id"),
+                                                        IntegerArgumentType.getInteger(ctx, "amount")
+                                                )))))
+                        .then(Commands.literal("multiplier")
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(0))
+                                        .then(Commands.argument("id", EntityArgument.player())
+                                                .executes(ctx -> setMultiplier(
+                                                        ctx.getSource(),
+                                                        EntityArgument.getPlayer(ctx, "id"),
+                                                        IntegerArgumentType.getInteger(ctx, "amount")
+                                                ))))))
+                .then(Commands.literal("reset")
+                        .then(Commands.argument("id", EntityArgument.player())
+                                .executes(ctx -> reset(
+                                        ctx.getSource(),
+                                        EntityArgument.getPlayer(ctx, "id")
+                                ))))
+                .then(Commands.literal("spawnorbs")
+                        .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                                .executes(ctx -> spawnOrbs(
+                                        ctx.getSource(),
+                                        IntegerArgumentType.getInteger(ctx, "amount")
+                                ))))
+                .then(Commands.literal("pause")
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                                .executes(ctx -> setPaused(
+                                        ctx.getSource(),
+                                        BoolArgumentType.getBool(ctx, "value")
+                                ))))
+                .then(Commands.literal("max")
+                        .then(Commands.argument("value", IntegerArgumentType.integer(1))
+                                .executes(ctx -> setMaxLevel(
+                                        ctx.getSource(),
+                                        IntegerArgumentType.getInteger(ctx, "value")
+                                ))))
+                .then(Commands.literal("query")
+                        .then(Commands.argument("id", EntityArgument.player())
+                                .executes(ctx -> query(
+                                        ctx.getSource(),
+                                        EntityArgument.getPlayer(ctx, "id")
+                                ))))
+                .then(Commands.literal("hud")
+                        .then(Commands.literal("levelbar")
+                                .then(Commands.literal("stayonscreen")
+                                        .then(Commands.argument("value", BoolArgumentType.bool())
+                                                .executes(ctx -> setHudStayOnScreen(
+                                                        ctx.getSource(),
+                                                        BoolArgumentType.getBool(ctx, "value")
+                                                ))))
+                                .then(Commands.literal("display")
+                                        .then(Commands.literal("top")
+                                                .executes(ctx -> setHudDisplayPosition(ctx.getSource(), "top")))
+                                        .then(Commands.literal("bottom")
+                                                .executes(ctx -> setHudDisplayPosition(ctx.getSource(), "bottom"))))));
     }
 
     private static int addXp(CommandSourceStack source, ServerPlayer player, long amount) {
@@ -179,6 +199,18 @@ public final class LevelUpCommands {
                         + ", max=" + LevelUpApi.getMaxLevel()
                         + ", paused=" + LevelUpApi.isPaused()
         ), false);
+        return 1;
+    }
+
+    private static int setHudStayOnScreen(CommandSourceStack source, boolean value) {
+        NeoForge.EVENT_BUS.post(new LevelUpHudStayOnScreenEvent(value));
+        source.sendSuccess(() -> Component.literal("LevelUP HUD stay-on-screen lock is now " + (value ? "enabled" : "disabled") + "."), false);
+        return value ? 1 : 0;
+    }
+
+    private static int setHudDisplayPosition(CommandSourceStack source, String position) {
+        NeoForge.EVENT_BUS.post(new LevelUpHudPositionEvent(position));
+        source.sendSuccess(() -> Component.literal("LevelUP HUD display position set to " + position + "."), false);
         return 1;
     }
 }

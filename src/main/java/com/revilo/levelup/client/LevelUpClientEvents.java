@@ -5,6 +5,8 @@ import com.revilo.levelup.client.entity.LevelUpXpOrbRenderer;
 import com.revilo.levelup.client.gui.InventoryLevelBarRenderer;
 import com.revilo.levelup.client.gui.TopCenterLevelOverlay;
 import com.revilo.levelup.event.LevelUpHudDisplayEvent;
+import com.revilo.levelup.event.LevelUpHudPositionEvent;
+import com.revilo.levelup.event.LevelUpHudStayOnScreenEvent;
 import com.revilo.levelup.registry.LevelUpEntities;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -41,9 +43,22 @@ public final class LevelUpClientEvents {
         }
 
         @SubscribeEvent
+        public static void onHudStayOnScreen(LevelUpHudStayOnScreenEvent event) {
+            TopCenterLevelOverlay.setEventStayOnScreenLock(event.shouldStayOnScreen());
+        }
+
+        @SubscribeEvent
+        public static void onHudPosition(LevelUpHudPositionEvent event) {
+            TopCenterLevelOverlay.setEventHudPosition(event.getPosition());
+        }
+
+        @SubscribeEvent
         public static void onRenderGuiLayerPre(RenderGuiLayerEvent.Pre event) {
+            if (!TopCenterLevelOverlay.shouldHideVanillaExperienceBar()) {
+                return;
+            }
             if (event.getName().equals(VanillaGuiLayers.EXPERIENCE_BAR)
-                    && TopCenterLevelOverlay.shouldHideVanillaExperienceBar()) {
+                    || event.getName().equals(VanillaGuiLayers.JUMP_METER)) {
                 event.setCanceled(true);
             }
         }

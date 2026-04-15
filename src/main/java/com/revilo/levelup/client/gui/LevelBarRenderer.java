@@ -20,35 +20,59 @@ public final class LevelBarRenderer {
     private LevelBarRenderer() {}
 
     public static void render(GuiGraphics guiGraphics, int x, int y, float progress, Component label) {
-        render(guiGraphics, x, y, progress, label, true);
+        render(guiGraphics, x, y, progress, label, true, 0, true, 1.0F);
     }
 
     public static void render(GuiGraphics guiGraphics, int x, int y, float progress, Component label, boolean drawBackground) {
+        render(guiGraphics, x, y, progress, label, drawBackground, 0, true, 1.0F);
+    }
+
+    public static void render(GuiGraphics guiGraphics, int x, int y, float progress, Component label, boolean drawBackground, int labelYOffset) {
+        render(guiGraphics, x, y, progress, label, drawBackground, labelYOffset, true, 1.0F);
+    }
+
+    public static void render(
+            GuiGraphics guiGraphics,
+            int x,
+            int y,
+            float progress,
+            Component label,
+            boolean drawBackground,
+            int labelYOffset,
+            boolean drawLabel,
+            float alpha
+    ) {
+        float clampedAlpha = Math.max(0.0F, Math.min(1.0F, alpha));
         int progressWidth = Math.max(0, Math.min(BAR_WIDTH, Math.round(progress * BAR_WIDTH)));
 
         if (drawBackground) {
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clampedAlpha);
             guiGraphics.blit(BAR_BACKGROUND, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
         }
 
         if (progressWidth > 0) {
-            tint(getConfiguredColor());
+            tint(getConfiguredColor(), clampedAlpha);
             guiGraphics.blit(BAR_PROGRESS, x, y, 0, 0, progressWidth, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+        if (!drawLabel || label == null || clampedAlpha <= 0.0F) {
+            return;
+        }
 
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;
         int textWidth = font.width(label);
         int textX = x + (BAR_WIDTH - textWidth) / 2;
-        int textY = y - 10;
-        int outlineColor = darken(getConfiguredColor());
+        int textY = y - 10 + labelYOffset;
+        int outlineColor = withAlpha(darken(getConfiguredColor()), clampedAlpha);
+        int textColor = withAlpha(getConfiguredColor(), clampedAlpha);
 
         guiGraphics.drawString(font, label, textX - 1, textY, outlineColor, false);
         guiGraphics.drawString(font, label, textX + 1, textY, outlineColor, false);
         guiGraphics.drawString(font, label, textX, textY - 1, outlineColor, false);
         guiGraphics.drawString(font, label, textX, textY + 1, outlineColor, false);
-        guiGraphics.drawString(font, label, textX, textY, getConfiguredColor(), false);
+        guiGraphics.drawString(font, label, textX, textY, textColor, false);
     }
 
     public static int getConfiguredColor() {
@@ -72,11 +96,11 @@ public final class LevelBarRenderer {
         }
     }
 
-    private static void tint(int color) {
+    private static void tint(int color, float alpha) {
         float red = ((color >> 16) & 0xFF) / 255.0F;
         float green = ((color >> 8) & 0xFF) / 255.0F;
         float blue = (color & 0xFF) / 255.0F;
-        RenderSystem.setShaderColor(red, green, blue, 1.0F);
+        RenderSystem.setShaderColor(red, green, blue, alpha);
     }
 
     private static int darken(int color) {
@@ -84,5 +108,10 @@ public final class LevelBarRenderer {
         int green = (int) (((color >> 8) & 0xFF) * 0.35F);
         int blue = (int) ((color & 0xFF) * 0.35F);
         return (red << 16) | (green << 8) | blue;
+    }
+
+    private static int withAlpha(int color, float alpha) {
+        int alphaByte = Math.max(0, Math.min(255, Math.round(alpha * 255.0F)));
+        return (alphaByte << 24) | (color & 0xFFFFFF);
     }
 }
