@@ -41,6 +41,14 @@ public interface ILevelUpService {
 
     void setXpMultiplier(ServerPlayer player, int multiplier);
 
+    boolean isLevelLocked(Player player);
+
+    int getLockedLevel(Player player);
+
+    void lockLevel(ServerPlayer player, int level);
+
+    void unlockLevel(ServerPlayer player);
+
     boolean isPaused();
 
     void setPaused(boolean paused);

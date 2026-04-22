@@ -102,6 +102,10 @@ Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 - `void setXp(ServerPlayer player, long xp)` directly sets total XP and recalculates level.
 - `void setLevel(ServerPlayer player, int level)` sets level by assigning total XP floor for that level.
 - `void setXpMultiplier(ServerPlayer player, int multiplier)` sets the stored per-player XP multiplier.
+- `boolean isLevelLocked(Player player)` returns whether player progression is currently level-locked.
+- `int getLockedLevel(Player player)` returns locked cap level, or `-1` when unlocked.
+- `void lockLevel(ServerPlayer player, int level)` locks progression to the supplied level cap for that player.
+- `void unlockLevel(ServerPlayer player)` clears the player's lock and allows progression to continue.
 - `boolean isPaused()` returns whether LevelUP XP gains are currently paused.
 - `void setPaused(boolean paused)` pauses or resumes LevelUP XP gains.
 - `void setMaxLevelOverride(int maxLevel)` overrides the configured hard cap until cleared.
@@ -122,6 +126,7 @@ All events are posted on `NeoForge.EVENT_BUS`.
 - `LevelUpXpGainedEvent#setAmount(long)` lets integrations scale or clamp incoming XP.
 - `LevelUpLevelChangedEvent` fires when stored level changes in either direction.
 - `LevelUpLevelChangedEvent.LevelUp` fires once per level gained when multiple levels are gained in one update.
+- `LevelUpLevelLockChangedEvent` fires when a player's lock cap changes (`-1` means unlocked).
 - `LevelUpOutputEvent` fires only when level increases and includes old/new level, old/new XP, source, and levels gained.
 - `LevelUpHudDisplayEvent` can be posted client-side to force the HUD on-screen with custom text/progress for a duration.
 

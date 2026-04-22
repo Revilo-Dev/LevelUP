@@ -83,6 +83,22 @@ public final class LevelUpApi {
         SERVICE.setXpMultiplier(player, multiplier);
     }
 
+    public static boolean isLevelLocked(Player player) {
+        return SERVICE.isLevelLocked(player);
+    }
+
+    public static int getLockedLevel(Player player) {
+        return SERVICE.getLockedLevel(player);
+    }
+
+    public static void lockLevel(ServerPlayer player, int level) {
+        SERVICE.lockLevel(player, level);
+    }
+
+    public static void unlockLevel(ServerPlayer player) {
+        SERVICE.unlockLevel(player);
+    }
+
     public static boolean isPaused() {
         return SERVICE.isPaused();
     }

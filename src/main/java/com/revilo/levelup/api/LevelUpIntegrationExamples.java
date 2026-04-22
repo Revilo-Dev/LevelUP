@@ -1,6 +1,7 @@
 package com.revilo.levelup.api;
 
 import com.revilo.levelup.event.LevelUpLevelChangedEvent;
+import com.revilo.levelup.event.LevelUpLevelLockChangedEvent;
 import com.revilo.levelup.event.LevelUpOutputEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,6 +40,16 @@ public final class LevelUpIntegrationExamples {
         LevelUpApi.setLevelMultiplierOverride(0.60D);
     }
 
+    public static void onPlayerStartedStoryArc(ServerPlayer player) {
+        // Example: lock progression at level 10 until a boss objective is completed.
+        LevelUpApi.lockLevel(player, 10);
+    }
+
+    public static void onBossObjectiveCompleted(ServerPlayer player) {
+        // Unlock progression so leveling can continue past the cap.
+        LevelUpApi.unlockLevel(player);
+    }
+
     @SubscribeEvent
     public static void onLevelUpGrantSkillPoint(LevelUpLevelChangedEvent.LevelUp event) {
         ServerPlayer player = event.getPlayer();
@@ -52,5 +63,11 @@ public final class LevelUpIntegrationExamples {
         // Example output payload for external mods:
         // event.getPlayer(), event.getOldLevel(), event.getNewLevel(),
         // event.getOldXp(), event.getNewXp(), event.getSource(), event.getLevelsGained()
+    }
+
+    @SubscribeEvent
+    public static void onLevelLockChanged(LevelUpLevelLockChangedEvent event) {
+        // Example lock payload for external mods:
+        // event.getPlayer(), event.getOldLockedLevel(), event.getNewLockedLevel(), event.isLocked()
     }
 }

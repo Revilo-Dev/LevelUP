@@ -4,6 +4,7 @@ import com.revilo.levelup.data.LevelFormula;
 import com.revilo.levelup.data.PlayerProgressionData;
 import com.revilo.levelup.entity.LevelUpXpOrbEntity;
 import com.revilo.levelup.event.LevelUpLevelChangedEvent;
+import com.revilo.levelup.event.LevelUpLevelLockChangedEvent;
 import com.revilo.levelup.event.LevelUpOutputEvent;
 import com.revilo.levelup.event.LevelUpXpGainedEvent;
 import com.revilo.levelup.network.LevelUpNetwork;
@@ -56,22 +57,26 @@ public final class LevelUpService implements ILevelUpService {
 
     @Override
     public long getXpNeededForNextLevel(Player player) {
-        int level = getLevel(player);
-        if (level >= getMaxLevel()) {
+        PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+        int level = data.getLevel();
+        int maxLevel = getEffectiveMaxLevel(data);
+        if (level >= maxLevel) {
             return 0L;
         }
-        long progress = getXpIntoCurrentLevel(player);
-        long cost = getXpForNextLevel(level);
+        long progress = Math.max(0L, data.getXp() - LevelFormula.totalXpForLevel(level));
+        long cost = LevelFormula.xpForNextLevel(level);
         return Math.max(0L, cost - progress);
     }
 
     @Override
     public float getProgressToNextLevel(Player player) {
-        int level = getLevel(player);
-        if (level >= getMaxLevel()) {
+        PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+        int level = data.getLevel();
+        int maxLevel = getEffectiveMaxLevel(data);
+        if (level >= maxLevel) {
             return 1.0F;
         }
-        long intoLevel = getXpIntoCurrentLevel(player);
+        long intoLevel = Math.max(0L, data.getXp() - LevelFormula.totalXpForLevel(level));
         long cost = Math.max(1L, getXpForNextLevel(level));
         return Math.min(1.0F, (float) intoLevel / (float) cost);
     }
@@ -124,9 +129,14 @@ public final class LevelUpService implements ILevelUpService {
         int oldLevel = data.getLevel();
         long oldXp = data.getXp();
         long newXp = LevelFormula.saturatingAdd(oldXp, gain);
+        int maxLevel = getEffectiveMaxLevel(data);
+        long maxXp = LevelFormula.totalXpForLevel(maxLevel);
+        if (newXp > maxXp) {
+            newXp = maxXp;
+        }
         data.setXp(newXp);
 
-        int newLevel = LevelFormula.levelForXp(newXp, getMaxLevel());
+        int newLevel = LevelFormula.levelForXp(newXp, maxLevel);
         data.setLevel(newLevel);
 
         if (newLevel != oldLevel) {
@@ -153,7 +163,7 @@ public final class LevelUpService implements ILevelUpService {
         }
 
         int currentLevel = getLevel(player);
-        int targetLevel = Math.min(getMaxLevel(), currentLevel + safeLevels);
+        int targetLevel = Math.min(getEffectiveMaxLevel(player), currentLevel + safeLevels);
         long targetXp = getTotalXpForLevel(targetLevel);
         long currentXp = getXp(player);
         long xpToAdd = Math.max(0L, targetXp - currentXp);
@@ -165,8 +175,10 @@ public final class LevelUpService implements ILevelUpService {
         PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
         int oldLevel = data.getLevel();
         long oldXp = data.getXp();
-        data.setXp(Math.max(0L, xp));
-        int newLevel = LevelFormula.levelForXp(data.getXp(), getMaxLevel());
+        int maxLevel = getEffectiveMaxLevel(data);
+        long clampedXp = Math.min(Math.max(0L, xp), LevelFormula.totalXpForLevel(maxLevel));
+        data.setXp(clampedXp);
+        int newLevel = LevelFormula.levelForXp(data.getXp(), maxLevel);
         data.setLevel(newLevel);
         if (newLevel != oldLevel) {
             NeoForge.EVENT_BUS.post(new LevelUpLevelChangedEvent(player, oldLevel, newLevel));
@@ -179,7 +191,7 @@ public final class LevelUpService implements ILevelUpService {
 
     @Override
     public void setLevel(ServerPlayer player, int level) {
-        int clampedLevel = Math.max(0, Math.min(level, getMaxLevel()));
+        int clampedLevel = Math.max(0, Math.min(level, getEffectiveMaxLevel(player)));
         long xpAtLevel = LevelFormula.totalXpForLevel(clampedLevel);
         setXp(player, xpAtLevel);
     }
@@ -188,6 +200,51 @@ public final class LevelUpService implements ILevelUpService {
     public void setXpMultiplier(ServerPlayer player, int multiplier) {
         PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
         data.setMultiplier(multiplier);
+        sync(player);
+    }
+
+    @Override
+    public boolean isLevelLocked(Player player) {
+        return getLockedLevel(player) >= 0;
+    }
+
+    @Override
+    public int getLockedLevel(Player player) {
+        return player.getData(LevelUpAttachments.PLAYER_PROGRESSION).getLockedLevel();
+    }
+
+    @Override
+    public void lockLevel(ServerPlayer player, int level) {
+        PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+        int oldLockedLevel = data.getLockedLevel();
+        int newLockedLevel = Math.max(0, Math.min(level, getMaxLevel()));
+        if (oldLockedLevel == newLockedLevel) {
+            return;
+        }
+
+        data.setLockedLevel(newLockedLevel);
+        NeoForge.EVENT_BUS.post(new LevelUpLevelLockChangedEvent(player, oldLockedLevel, newLockedLevel));
+
+        int maxLevel = getEffectiveMaxLevel(data);
+        long maxXp = LevelFormula.totalXpForLevel(maxLevel);
+        if (data.getXp() > maxXp || data.getLevel() > maxLevel) {
+            setXp(player, maxXp);
+            return;
+        }
+
+        sync(player);
+    }
+
+    @Override
+    public void unlockLevel(ServerPlayer player) {
+        PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+        int oldLockedLevel = data.getLockedLevel();
+        if (oldLockedLevel < 0) {
+            return;
+        }
+
+        data.setLockedLevel(-1);
+        NeoForge.EVENT_BUS.post(new LevelUpLevelLockChangedEvent(player, oldLockedLevel, -1));
         sync(player);
     }
 
@@ -258,5 +315,18 @@ public final class LevelUpService implements ILevelUpService {
             return Long.MAX_VALUE;
         }
         return value * multiplier;
+    }
+
+    private int getEffectiveMaxLevel(Player player) {
+        return getEffectiveMaxLevel(player.getData(LevelUpAttachments.PLAYER_PROGRESSION));
+    }
+
+    private int getEffectiveMaxLevel(PlayerProgressionData data) {
+        int maxLevel = getMaxLevel();
+        int lockedLevel = data.getLockedLevel();
+        if (lockedLevel >= 0) {
+            maxLevel = Math.min(maxLevel, lockedLevel);
+        }
+        return Math.max(0, maxLevel);
     }
 }
