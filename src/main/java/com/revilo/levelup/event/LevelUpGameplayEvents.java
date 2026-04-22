@@ -75,7 +75,7 @@ public final class LevelUpGameplayEvents {
             return entity instanceof Enemy;
         }
 
-        return entity.getType().is(LevelUpTags.DROPS_LEVELS)
-                || entity.getTags().contains(LevelUpTags.DROPS_LEVELS_ENTITY_TAG);
+        return entity.getTags().contains(LevelUpTags.DROPS_LEVELS_ENTITY_TAG)
+                || entity.getTags().contains(LevelUpTags.LEGACY_DROP_LEVELS_ENTITY_TAG);
     }
 }

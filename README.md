@@ -28,7 +28,7 @@ Common config:
 - `sources.mobKillXp` default `8`
 - `sources.drop_levels_only_from_mobs_with_tag` default `false`
   When `false`, all hostile mobs drop LevelUP XP.
-  When `true`, only mobs with the `drops_levels` entity tag or mobs whose entity type is in [`#levelup:drops_levels`](/C:/Users/revil/IdeaProjects/LevelUP/src/main/resources/data/levelup/tags/entity_types/drops_levels.json) drop LevelUP XP.
+  When `true`, only mobs with the `drops_levels` entity tag drop LevelUP XP (`drop_levels` is also accepted for legacy setups).
 
 Client config:
 
@@ -49,10 +49,9 @@ Client config:
 
 ## Mob Tagging
 
-LevelUP now supports two ways to mark mobs as eligible for LevelUP XP drops when `sources.drop_levels_only_from_mobs_with_tag=true`.
+LevelUP supports per-entity tagging to mark mobs as eligible for LevelUP XP drops when `sources.drop_levels_only_from_mobs_with_tag=true`.
 
-- Per-entity tag: add the entity tag `drops_levels` when the mob is spawned.
-- Entity type tag: add the mob's entity type to [`#levelup:drops_levels`](/C:/Users/revil/IdeaProjects/LevelUP/src/main/resources/data/levelup/tags/entity_types/drops_levels.json) from a datapack or mod.
+- Per-entity tag: add the entity tag `drops_levels` when the mob is spawned (`drop_levels` also works for legacy setups).
 
 Examples:
 

@@ -41,7 +41,7 @@ public final class LevelUpConfig {
             mobKillXp = builder.comment("Base LevelUP XP dropped when an eligible mob is killed by a player.")
                     .defineInRange("mobKillXp", 8, 0, Integer.MAX_VALUE);
             dropLevelsOnlyFromMobsWithTag = builder.comment(
-                            "When true, only mobs with the `drops_levels` entity tag or whose entity type is in #levelup:drops_levels drop LevelUP XP.",
+                            "When true, only mobs with the `drops_levels` entity tag (legacy `drop_levels` also accepted) drop LevelUP XP.",
                             "When false, all hostile mobs drop LevelUP XP."
                     )
                     .define("drop_levels_only_from_mobs_with_tag", false);

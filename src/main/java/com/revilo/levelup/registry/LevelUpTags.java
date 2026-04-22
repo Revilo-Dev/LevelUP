@@ -8,6 +8,7 @@ import net.minecraft.world.entity.EntityType;
 
 public final class LevelUpTags {
     public static final String DROPS_LEVELS_ENTITY_TAG = "drops_levels";
+    public static final String LEGACY_DROP_LEVELS_ENTITY_TAG = "drop_levels";
     public static final TagKey<EntityType<?>> DROPS_LEVELS = TagKey.create(
             Registries.ENTITY_TYPE,
             ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "drops_levels")

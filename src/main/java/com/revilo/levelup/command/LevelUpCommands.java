@@ -25,7 +25,6 @@ public final class LevelUpCommands {
     }
 
     private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(buildRoot("levels"));
         dispatcher.register(buildRoot("level"));
     }
 
