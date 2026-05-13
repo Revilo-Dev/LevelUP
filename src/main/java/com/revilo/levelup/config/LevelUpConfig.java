@@ -20,6 +20,7 @@ public final class LevelUpConfig {
         public final ModConfigSpec.DoubleValue exponent;
         public final ModConfigSpec.DoubleValue levelMultiplier;
         public final ModConfigSpec.IntValue maxLevel;
+        public final ModConfigSpec.BooleanValue enableMobKillXp;
         public final ModConfigSpec.IntValue mobKillXp;
         public final ModConfigSpec.BooleanValue dropLevelsOnlyFromMobsWithTag;
 
@@ -38,10 +39,12 @@ public final class LevelUpConfig {
             builder.pop();
 
             builder.push("sources");
-            mobKillXp = builder.comment("Base LevelUP XP dropped when an eligible mob is killed by a player.")
+            enableMobKillXp = builder.comment("When false, mob kills will never drop LevelUP XP.")
+                    .define("enable_mob_kill_xp", true);
+            mobKillXp = builder.comment("LevelUP XP dropped when an eligible mob is killed by a player. Set to 0 to disable all mob LevelUP XP drops.")
                     .defineInRange("mobKillXp", 8, 0, Integer.MAX_VALUE);
             dropLevelsOnlyFromMobsWithTag = builder.comment(
-                            "When true, only mobs with the `drops_levels` entity tag (legacy `drop_levels` also accepted) drop LevelUP XP.",
+                            "When true, only entity types in the `levelup:drops_levels` entity type tag (legacy `levelup:drop_levels` also accepted) drop LevelUP XP.",
                             "When false, all hostile mobs drop LevelUP XP."
                     )
                     .define("drop_levels_only_from_mobs_with_tag", false);

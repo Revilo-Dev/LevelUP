@@ -43,31 +43,34 @@ public final class LevelUpGameplayEvents {
 
     @SubscribeEvent
     public static void onMobKilled(LivingDeathEvent event) {
+        if (!LevelUpConfig.COMMON.enableMobKillXp.get()) {
+            return;
+        }
+        int baseDrop = LevelUpConfig.COMMON.mobKillXp.get();
+        if (baseDrop <= 0) {
+            return;
+        }
         if (!(event.getEntity() instanceof Mob deadEntity)) {
             return;
         }
         if (!(deadEntity.level() instanceof ServerLevel serverLevel)) {
             return;
         }
+        if (!event.getSource().is(DamageTypes.PLAYER_ATTACK)) {
+            return;
+        }
         Entity attacker = event.getSource().getEntity();
         if (!(attacker instanceof ServerPlayer killer)) {
             return;
         }
-        if (event.getSource().is(DamageTypes.THORNS)) {
+        if (attacker == deadEntity) {
             return;
         }
         if (!shouldDropLevelXp(deadEntity)) {
             return;
         }
 
-        int baseDrop = LevelUpConfig.COMMON.mobKillXp.get();
-        int vanillaXp = Math.max(0, deadEntity.getExperienceReward(serverLevel, killer));
-        int totalDrop = baseDrop + vanillaXp;
-        if (totalDrop <= 0) {
-            return;
-        }
-
-        LevelUpApi.spawnLevelUpXpOrb(serverLevel, deadEntity.position(), totalDrop);
+        LevelUpApi.spawnLevelUpXpOrb(serverLevel, deadEntity.position(), baseDrop);
     }
 
     private static boolean shouldDropLevelXp(LivingEntity entity) {
@@ -75,7 +78,7 @@ public final class LevelUpGameplayEvents {
             return entity instanceof Enemy;
         }
 
-        return entity.getTags().contains(LevelUpTags.DROPS_LEVELS_ENTITY_TAG)
-                || entity.getTags().contains(LevelUpTags.LEGACY_DROP_LEVELS_ENTITY_TAG);
+        return entity.getType().is(LevelUpTags.DROPS_LEVELS)
+                || entity.getType().is(LevelUpTags.LEGACY_DROP_LEVELS);
     }
 }

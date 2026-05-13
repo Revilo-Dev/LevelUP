@@ -2,5 +2,12 @@
   "itemGroup.levelup": "LevelUP",
   "item.levelup.test_skill_orb": "Test Skill Orb",
   "entity.levelup.level_orb": "Level Orb",
-  "levelup.ui.level": "Level %s"
+  "levelup.ui.level": "Level %s",
+  "levelup.ui.requirement": "Level %s / %s",
+  "levelup.ui.requirement_met": "Level %s / %s",
+  "levelup.ui.reward_preview": "Level %s (+%s XP)",
+  "levelup.tooltip.requires_level": "Requires Level %s",
+  "levelup.tooltip.requirement_met": "Level requirement met: %s / %s",
+  "levelup.tooltip.current_level": "Current Level: %s",
+  "levelup.tooltip.xp_until_required": "%s LevelUP XP until unlocked"
 }

@@ -38,6 +38,7 @@ public final class TopCenterLevelOverlay {
     private static boolean lastStayOnScreen;
     private static Boolean eventStayOnScreenOverride;
     private static String eventHudPosition;
+    private static Boolean eventHudEnabledOverride;
 
     private TopCenterLevelOverlay() {}
 
@@ -115,9 +116,16 @@ public final class TopCenterLevelOverlay {
         eventHudPosition = position;
     }
 
+    public static void setEventHudEnabled(boolean enabled) {
+        eventHudEnabledOverride = enabled;
+    }
+
     public static void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.options.hideGui) {
+            return;
+        }
+        if (!isHudEnabled()) {
             return;
         }
         if (!LevelUpClientConfig.CLIENT.showTopCenterLevelOverlay.get()) {
@@ -149,10 +157,13 @@ public final class TopCenterLevelOverlay {
         if (alpha <= 0.0F) {
             return;
         }
-        LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), !bottomHud, labelYOffset, !bottomHud, alpha);
+        LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), !bottomHud, labelYOffset, !bottomHud, alpha, bottomHud);
     }
 
     public static boolean shouldHideVanillaExperienceBar() {
+        if (!isHudEnabled()) {
+            return false;
+        }
         if (!LevelUpClientConfig.CLIENT.showTopCenterLevelOverlay.get()) {
             return false;
         }
@@ -283,6 +294,12 @@ public final class TopCenterLevelOverlay {
         return eventStayOnScreenOverride != null
                 ? eventStayOnScreenOverride
                 : LevelUpClientConfig.CLIENT.levelHudStayOnScreen.get();
+    }
+
+    private static boolean isHudEnabled() {
+        return eventHudEnabledOverride != null
+                ? eventHudEnabledOverride
+                : LevelUpClientConfig.CLIENT.showTopCenterLevelOverlay.get();
     }
 
     private record HudSnapshot(float progress, Component label) {}

@@ -5,6 +5,7 @@ import com.revilo.levelup.client.entity.LevelUpXpOrbRenderer;
 import com.revilo.levelup.client.gui.InventoryLevelBarRenderer;
 import com.revilo.levelup.client.gui.TopCenterLevelOverlay;
 import com.revilo.levelup.event.LevelUpHudDisplayEvent;
+import com.revilo.levelup.event.LevelUpHudEnabledEvent;
 import com.revilo.levelup.event.LevelUpHudPositionEvent;
 import com.revilo.levelup.event.LevelUpHudStayOnScreenEvent;
 import com.revilo.levelup.registry.LevelUpEntities;
@@ -40,6 +41,11 @@ public final class LevelUpClientEvents {
         @SubscribeEvent
         public static void onHudDisplay(LevelUpHudDisplayEvent event) {
             TopCenterLevelOverlay.showCustom(event.getLabel(), event.getProgress(), event.getDurationMillis());
+        }
+
+        @SubscribeEvent
+        public static void onHudEnabled(LevelUpHudEnabledEvent event) {
+            TopCenterLevelOverlay.setEventHudEnabled(event.isEnabled());
         }
 
         @SubscribeEvent

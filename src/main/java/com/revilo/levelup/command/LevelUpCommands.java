@@ -7,6 +7,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.revilo.levelup.api.LevelUpApi;
 import com.revilo.levelup.api.LevelUpSources;
+import com.revilo.levelup.event.LevelUpHudEnabledEvent;
 import com.revilo.levelup.event.LevelUpHudPositionEvent;
 import com.revilo.levelup.event.LevelUpHudStayOnScreenEvent;
 import net.minecraft.commands.CommandSourceStack;
@@ -120,6 +121,10 @@ public final class LevelUpCommands {
                                                         BoolArgumentType.getBool(ctx, "value")
                                                 ))))
                                 .then(Commands.literal("display")
+                                        .then(Commands.literal("enable")
+                                                .executes(ctx -> setHudEnabled(ctx.getSource(), true)))
+                                        .then(Commands.literal("disable")
+                                                .executes(ctx -> setHudEnabled(ctx.getSource(), false)))
                                         .then(Commands.literal("top")
                                                 .executes(ctx -> setHudDisplayPosition(ctx.getSource(), "top")))
                                         .then(Commands.literal("bottom")
@@ -211,5 +216,11 @@ public final class LevelUpCommands {
         NeoForge.EVENT_BUS.post(new LevelUpHudPositionEvent(position));
         source.sendSuccess(() -> Component.literal("LevelUP HUD display position set to " + position + "."), false);
         return 1;
+    }
+
+    private static int setHudEnabled(CommandSourceStack source, boolean enabled) {
+        NeoForge.EVENT_BUS.post(new LevelUpHudEnabledEvent(enabled));
+        source.sendSuccess(() -> Component.literal("LevelUP HUD display is now " + (enabled ? "enabled" : "disabled") + "."), false);
+        return enabled ? 1 : 0;
     }
 }

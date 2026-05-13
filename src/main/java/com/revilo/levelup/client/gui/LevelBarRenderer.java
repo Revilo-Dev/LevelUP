@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 public final class LevelBarRenderer {
     private static final ResourceLocation BAR_BACKGROUND =
             ResourceLocation.fromNamespaceAndPath("gui", "skill_bar/xp-bar-background.png");
+    private static final ResourceLocation BAR_BACKGROUND_BOTTOM =
+            ResourceLocation.fromNamespaceAndPath("gui", "skill_bar/xp-bar-background-bottom.png");
     private static final ResourceLocation BAR_PROGRESS =
             ResourceLocation.fromNamespaceAndPath("gui", "skill_bar/xp-bar-progress.png");
     public static final int BAR_WIDTH = 184;
@@ -42,12 +44,28 @@ public final class LevelBarRenderer {
             boolean drawLabel,
             float alpha
     ) {
+        render(guiGraphics, x, y, progress, label, drawBackground, labelYOffset, drawLabel, alpha, false);
+    }
+
+    public static void render(
+            GuiGraphics guiGraphics,
+            int x,
+            int y,
+            float progress,
+            Component label,
+            boolean drawBackground,
+            int labelYOffset,
+            boolean drawLabel,
+            float alpha,
+            boolean useBottomBackground
+    ) {
         float clampedAlpha = Math.max(0.0F, Math.min(1.0F, alpha));
         int progressWidth = Math.max(0, Math.min(BAR_WIDTH, Math.round(progress * BAR_WIDTH)));
 
         if (drawBackground) {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clampedAlpha);
-            guiGraphics.blit(BAR_BACKGROUND, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
+            ResourceLocation background = useBottomBackground ? BAR_BACKGROUND_BOTTOM : BAR_BACKGROUND;
+            guiGraphics.blit(background, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
         }
 
         if (progressWidth > 0) {

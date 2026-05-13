@@ -7,7 +7,7 @@ It provides a public API and event hooks so other mods can read player level, gr
 
 - Separate LevelUP XP and level progression from vanilla XP.
 - Configurable XP curve, max level cap, hostile mob XP drops, and tagged mob XP drops.
-- Eligible mob kills drop LevelUP XP as `sources.mobKillXp + vanilla mob XP reward`.
+- Eligible mob kills drop LevelUP XP equal to `sources.mobKillXp`.
 - Server-side LevelUP XP orb entity and pickup flow.
 - Animated top-center HUD overlay for LevelUP XP gain feedback that stays active during chained XP gains, slides down from off-screen when shown, and slides back up when finished.
 - Optional always-on HUD mode that keeps the level bar in the same on-screen position as the temporary overlay.
@@ -25,10 +25,13 @@ Common config:
 - `progression.exponent` default `1.35`
 - `progression.levelMultiplier` default `0.75`
 - `progression.maxLevel` default `500`
+- `sources.enable_mob_kill_xp` default `true`
+  When `false`, mob kills will not drop any LevelUP XP.
 - `sources.mobKillXp` default `8`
+  Set to `0` to disable all LevelUP XP from mob kills.
 - `sources.drop_levels_only_from_mobs_with_tag` default `false`
   When `false`, all hostile mobs drop LevelUP XP.
-  When `true`, only mobs with the `drops_levels` entity tag drop LevelUP XP (`drop_levels` is also accepted for legacy setups).
+  When `true`, only entity types in the `levelup:drops_levels` entity type tag drop LevelUP XP (`levelup:drop_levels` is also accepted for legacy setups).
 
 Client config:
 
@@ -49,17 +52,23 @@ Client config:
 
 ## Mob Tagging
 
-LevelUP supports per-entity tagging to mark mobs as eligible for LevelUP XP drops when `sources.drop_levels_only_from_mobs_with_tag=true`.
+LevelUP supports entity type tagging to mark mobs as eligible for LevelUP XP drops when `sources.drop_levels_only_from_mobs_with_tag=true`.
 
-- Per-entity tag: add the entity tag `drops_levels` when the mob is spawned (`drop_levels` also works for legacy setups).
+- Entity type tag: add entity IDs to `data/levelup/tags/entity_types/drops_levels.json` in a datapack.
 
 Examples:
 
-```mcfunction
-summon minecraft:zombie ~ ~ ~ {Tags:["drops_levels"]}
+```json
+{
+  "replace": false,
+  "values": [
+    "minecraft:zombie",
+    "minecraft:skeleton"
+  ]
+}
 ```
 
-Spawn eggs or other spawn systems can do the same by setting the spawned entity NBT `Tags:["drops_levels"]`.
+Runtime scoreboard tags such as `Tags:["drops_levels"]` are not used for LevelUP mob XP eligibility.
 
 ## Commands
 
@@ -118,6 +127,19 @@ Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 - `void spawnLevelUpXpOrbForLevel(ServerLevel level, Vec3 position, int level)` spawns LevelUP XP orbs worth the total XP floor for the supplied level.
 - `void spawnLevelUpXpOrbForLevel(ServerLevel level, double x, double y, double z, int level)` coordinate overload for level-based orb spawning.
 
+Client GUI rendering API:
+
+- `com.revilo.levelup.api.LevelUpClientApi.getLevelBarWidth()` returns level bar width.
+- `com.revilo.levelup.api.LevelUpClientApi.getLevelBarHeight()` returns level bar height.
+- `com.revilo.levelup.api.LevelUpClientApi.renderLevelBar(...)` renders the LevelUP bar with your provided progress/label.
+- `com.revilo.levelup.api.LevelUpClientApi.renderTopHudStyleLevelBar(...)` renders with the same background, label placement, alpha, and tint as the LevelUP top HUD.
+- `com.revilo.levelup.api.LevelUpClientApi.renderPlayerLevelBar(gui, x, y)` renders the local player's current level/progress and returns `false` if no local player is available.
+- `com.revilo.levelup.api.LevelUpClientApi.renderTopHudStylePlayerLevelBar(gui, x, y)` renders the local player's current level/progress using the exact top HUD bar style.
+- `com.revilo.levelup.api.LevelUpClientApi.getProgressToRequiredLevel(player, requiredLevel)` returns 0..1 progress toward a specific required level.
+- `com.revilo.levelup.api.LevelUpClientApi.renderRequiredLevelBar(...)` renders a top-HUD-style bar for locked buttons, boss keys, dungeons, or other level requirements.
+- `com.revilo.levelup.api.LevelUpClientApi.renderRewardPreviewBar(...)` renders a top-HUD-style preview of the player's level progress after a proposed XP reward.
+- `com.revilo.levelup.api.LevelUpClientApi.appendLevelRequirementTooltip(...)` appends standard LevelUP requirement lines to an item or GUI tooltip.
+
 ## Events You Can Subscribe To
 
 All events are posted on `NeoForge.EVENT_BUS`.
@@ -155,4 +177,89 @@ LevelUpApi.setLevelMultiplierOverride(0.60D);
 if (LevelUpApi.meetsLevelRequirement(player, 20)) {
     // Unlock feature
 }
+```
+
+## Rendering The LevelUP Bar In Your Own GUI
+
+Use the client API from your `Screen#render(...)` (or equivalent GUI draw event).
+
+```java
+import com.revilo.levelup.api.LevelUpClientApi;
+import net.minecraft.client.gui.GuiGraphics;
+
+@Override
+public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+    int x = (this.width - LevelUpClientApi.getLevelBarWidth()) / 2;
+    int y = this.topPos + 16; // place where your GUI needs it
+    LevelUpClientApi.renderTopHudStylePlayerLevelBar(guiGraphics, x, y);
+}
+```
+
+If you want to use custom text/progress instead of the current player value:
+
+```java
+LevelUpClientApi.renderTopHudStyleLevelBar(
+        guiGraphics,
+        x,
+        y,
+        0.42F,
+        Component.literal("Level 12")
+);
+```
+
+## Useful GUI Patterns
+
+Level-gated GUI button:
+
+```java
+int requiredLevel = 20;
+boolean unlocked = LevelUpApi.meetsLevelRequirement(this.minecraft.player, requiredLevel);
+this.miningMasteryButton.active = unlocked;
+
+LevelUpClientApi.renderRequiredLevelBar(
+        guiGraphics,
+        this.leftPos + 8,
+        this.topPos + 42,
+        requiredLevel
+);
+```
+
+Boss key or dungeon entry confirmation:
+
+```java
+int requiredLevel = 35;
+LevelUpClientApi.renderRequiredLevelBar(
+        guiGraphics,
+        (this.width - LevelUpClientApi.getLevelBarWidth()) / 2,
+        this.topPos + 64,
+        requiredLevel
+);
+
+this.enterButton.active = LevelUpApi.meetsLevelRequirement(this.minecraft.player, requiredLevel);
+```
+
+Item tooltip requirement:
+
+```java
+@Override
+public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+    Player player = Minecraft.getInstance().player;
+    if (player != null) {
+        LevelUpClientApi.appendLevelRequirementTooltip(tooltip, player, 15);
+    }
+}
+```
+
+Custom reward preview before claiming:
+
+```java
+long xpReward = 250L;
+LevelUpClientApi.renderRewardPreviewBar(
+        guiGraphics,
+        this.leftPos + 8,
+        this.topPos + 92,
+        xpReward
+);
 ```
