@@ -157,7 +157,7 @@ public final class TopCenterLevelOverlay {
         if (alpha <= 0.0F) {
             return;
         }
-        LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), !bottomHud, labelYOffset, !bottomHud, alpha, bottomHud);
+        LevelBarRenderer.render(guiGraphics, x, y, snapshot.progress(), snapshot.label(), true, labelYOffset, !bottomHud, alpha, bottomHud);
     }
 
     public static boolean shouldHideVanillaExperienceBar() {
