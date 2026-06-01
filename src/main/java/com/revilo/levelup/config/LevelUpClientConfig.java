@@ -18,6 +18,12 @@ public final class LevelUpClientConfig {
         public final ModConfigSpec.BooleanValue showTopCenterLevelOverlay;
         public final ModConfigSpec.BooleanValue showTemporaryLevelOverlay;
         public final ModConfigSpec.BooleanValue showInventoryLevelBar;
+        public final ModConfigSpec.IntValue hudLevelBarOffsetX;
+        public final ModConfigSpec.IntValue hudLevelBarOffsetY;
+        public final ModConfigSpec.IntValue inventoryLevelBarOffsetX;
+        public final ModConfigSpec.IntValue inventoryLevelBarOffsetY;
+        public final ModConfigSpec.BooleanValue openHudLevelBarRepositionGui;
+        public final ModConfigSpec.BooleanValue openInventoryLevelBarRepositionGui;
         public final ModConfigSpec.ConfigValue<String> levelHudPosition;
         public final ModConfigSpec.BooleanValue levelHudStayOnScreen;
         public final ModConfigSpec.ConfigValue<String> levelHudColor;
@@ -36,6 +42,18 @@ public final class LevelUpClientConfig {
                     .define("levelHudColor", "#53a4bc", value -> value instanceof String string && isValidHexColor(string));
             showInventoryLevelBar = builder.comment("Show the LevelUP progress bar inside the inventory screen.")
                     .define("showInventoryLevelBar", true);
+            hudLevelBarOffsetX = builder.comment("Horizontal offset for the HUD LevelUP bar in pixels.")
+                    .defineInRange("hudLevelBarOffsetX", 0, -2000, 2000);
+            hudLevelBarOffsetY = builder.comment("Vertical offset for the HUD LevelUP bar in pixels.")
+                    .defineInRange("hudLevelBarOffsetY", 0, -2000, 2000);
+            inventoryLevelBarOffsetX = builder.comment("Horizontal offset for the inventory LevelUP bar in pixels.")
+                    .defineInRange("inventoryLevelBarOffsetX", 0, -2000, 2000);
+            inventoryLevelBarOffsetY = builder.comment("Vertical offset for the inventory LevelUP bar in pixels.")
+                    .defineInRange("inventoryLevelBarOffsetY", 0, -2000, 2000);
+            openHudLevelBarRepositionGui = builder.comment("Set true to open a GUI and reposition the HUD LevelUP bar. Resets to false after opening.")
+                    .define("openHudLevelBarRepositionGui", false);
+            openInventoryLevelBarRepositionGui = builder.comment("Set true to open a GUI and reposition the inventory LevelUP bar. Resets to false after opening.")
+                    .define("openInventoryLevelBarRepositionGui", false);
             builder.pop();
         }
 

@@ -49,6 +49,18 @@ Client config:
   Tint color for the LevelUP progress fill and level text.
 - `hud.showInventoryLevelBar` default `true`
   Controls the LevelUP progress bar shown in the inventory screen.
+- `hud.hudLevelBarOffsetX` default `0`
+  Horizontal HUD LevelUP bar offset in pixels.
+- `hud.hudLevelBarOffsetY` default `0`
+  Vertical HUD LevelUP bar offset in pixels.
+- `hud.inventoryLevelBarOffsetX` default `0`
+  Horizontal inventory LevelUP bar offset in pixels.
+- `hud.inventoryLevelBarOffsetY` default `0`
+  Vertical inventory LevelUP bar offset in pixels.
+- `hud.openHudLevelBarRepositionGui` default `false`
+  Set to `true` to open the HUD bar reposition GUI. It resets to `false` after opening.
+- `hud.openInventoryLevelBarRepositionGui` default `false`
+  Set to `true` to open the inventory bar reposition GUI. It resets to `false` after opening.
 
 ## Mob Tagging
 
@@ -135,6 +147,12 @@ Client GUI rendering API:
 - `com.revilo.levelup.api.LevelUpClientApi.renderTopHudStyleLevelBar(...)` renders with the same background, label placement, alpha, and tint as the LevelUP top HUD.
 - `com.revilo.levelup.api.LevelUpClientApi.renderPlayerLevelBar(gui, x, y)` renders the local player's current level/progress and returns `false` if no local player is available.
 - `com.revilo.levelup.api.LevelUpClientApi.renderTopHudStylePlayerLevelBar(gui, x, y)` renders the local player's current level/progress using the exact top HUD bar style.
+- `com.revilo.levelup.api.LevelUpClientApi.openHudLevelBarRepositionGui()` opens the draggable HUD bar reposition GUI.
+- `com.revilo.levelup.api.LevelUpClientApi.openInventoryLevelBarRepositionGui()` opens the draggable inventory bar reposition GUI.
+- `com.revilo.levelup.api.LevelUpClientApi.setHudLevelBarOffset(x, y)` updates HUD bar offsets.
+- `com.revilo.levelup.api.LevelUpClientApi.setInventoryLevelBarOffset(x, y)` updates inventory bar offsets.
+- `com.revilo.levelup.api.LevelUpClientApi.getHudLevelBarOffsetX/Y()` reads HUD bar offsets.
+- `com.revilo.levelup.api.LevelUpClientApi.getInventoryLevelBarOffsetX/Y()` reads inventory bar offsets.
 - `com.revilo.levelup.api.LevelUpClientApi.getProgressToRequiredLevel(player, requiredLevel)` returns 0..1 progress toward a specific required level.
 - `com.revilo.levelup.api.LevelUpClientApi.renderRequiredLevelBar(...)` renders a top-HUD-style bar for locked buttons, boss keys, dungeons, or other level requirements.
 - `com.revilo.levelup.api.LevelUpClientApi.renderRewardPreviewBar(...)` renders a top-HUD-style preview of the player's level progress after a proposed XP reward.
@@ -263,3 +281,31 @@ LevelUpClientApi.renderRewardPreviewBar(
         xpReward
 );
 ```
+
+## Let Other Mods Reposition LevelUP Bars
+
+Other mods can trigger the built-in draggable GUI from client code:
+
+```java
+import com.revilo.levelup.api.LevelUpClientApi;
+
+// Opens the HUD bar reposition screen.
+LevelUpClientApi.openHudLevelBarRepositionGui();
+
+// Opens the inventory bar reposition screen.
+LevelUpClientApi.openInventoryLevelBarRepositionGui();
+```
+
+Other mods can also update config positions directly:
+
+```java
+LevelUpClientApi.setHudLevelBarOffset(12, -6);
+LevelUpClientApi.setInventoryLevelBarOffset(0, 18);
+```
+
+If a mod wants to trigger repositioning through config mutation (for example from a config GUI button), set:
+
+- `hud.openHudLevelBarRepositionGui=true`, or
+- `hud.openInventoryLevelBarRepositionGui=true`
+
+LevelUP consumes these flags and resets them to `false` after opening the GUI.

@@ -144,7 +144,8 @@ public final class TopCenterLevelOverlay {
         }
 
         HudSnapshot snapshot = resolveSnapshot(now, minecraft.player);
-        int x = (minecraft.getWindow().getGuiScaledWidth() - LevelBarRenderer.BAR_WIDTH) / 2;
+        int x = (minecraft.getWindow().getGuiScaledWidth() - LevelBarRenderer.BAR_WIDTH) / 2
+                + LevelUpClientConfig.CLIENT.hudLevelBarOffsetX.get();
         boolean bottomHud = usesBottomHud();
         if (bottomHud) {
             x -= 1;
@@ -152,6 +153,7 @@ public final class TopCenterLevelOverlay {
         int y = bottomHud
                 ? minecraft.getWindow().getGuiScaledHeight() - BOTTOM_MARGIN
                 : getTopHudY(now);
+        y += LevelUpClientConfig.CLIENT.hudLevelBarOffsetY.get();
         int labelYOffset = bottomHud ? 2 : 0;
         float alpha = bottomHud ? getBottomHudAlpha(now) : 1.0F;
         if (alpha <= 0.0F) {

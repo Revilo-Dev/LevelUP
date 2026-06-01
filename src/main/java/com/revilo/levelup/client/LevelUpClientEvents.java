@@ -3,6 +3,7 @@ package com.revilo.levelup.client;
 import com.revilo.levelup.LevelUpMod;
 import com.revilo.levelup.client.entity.LevelUpXpOrbRenderer;
 import com.revilo.levelup.client.gui.InventoryLevelBarRenderer;
+import com.revilo.levelup.client.gui.LevelBarRepositionController;
 import com.revilo.levelup.client.gui.TopCenterLevelOverlay;
 import com.revilo.levelup.event.LevelUpHudDisplayEvent;
 import com.revilo.levelup.event.LevelUpHudEnabledEvent;
@@ -13,6 +14,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ContainerScreenEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
@@ -36,6 +38,11 @@ public final class LevelUpClientEvents {
         @SubscribeEvent
         public static void onContainerForeground(ContainerScreenEvent.Render.Foreground event) {
             InventoryLevelBarRenderer.render(event);
+        }
+
+        @SubscribeEvent
+        public static void onClientTick(ClientTickEvent.Post event) {
+            LevelBarRepositionController.onClientTick();
         }
 
         @SubscribeEvent

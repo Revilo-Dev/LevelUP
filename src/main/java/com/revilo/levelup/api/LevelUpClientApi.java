@@ -1,6 +1,8 @@
 package com.revilo.levelup.api;
 
 import com.revilo.levelup.client.gui.LevelBarRenderer;
+import com.revilo.levelup.client.gui.LevelBarRepositionController;
+import com.revilo.levelup.config.LevelUpClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.ChatFormatting;
@@ -16,6 +18,40 @@ public final class LevelUpClientApi {
     private static final float TOP_HUD_ALPHA = 1.0F;
 
     private LevelUpClientApi() {}
+
+    public static void openHudLevelBarRepositionGui() {
+        LevelBarRepositionController.requestOpenHudRepositionGui();
+    }
+
+    public static void openInventoryLevelBarRepositionGui() {
+        LevelBarRepositionController.requestOpenInventoryRepositionGui();
+    }
+
+    public static void setHudLevelBarOffset(int offsetX, int offsetY) {
+        LevelUpClientConfig.CLIENT.hudLevelBarOffsetX.set(offsetX);
+        LevelUpClientConfig.CLIENT.hudLevelBarOffsetY.set(offsetY);
+    }
+
+    public static void setInventoryLevelBarOffset(int offsetX, int offsetY) {
+        LevelUpClientConfig.CLIENT.inventoryLevelBarOffsetX.set(offsetX);
+        LevelUpClientConfig.CLIENT.inventoryLevelBarOffsetY.set(offsetY);
+    }
+
+    public static int getHudLevelBarOffsetX() {
+        return LevelUpClientConfig.CLIENT.hudLevelBarOffsetX.get();
+    }
+
+    public static int getHudLevelBarOffsetY() {
+        return LevelUpClientConfig.CLIENT.hudLevelBarOffsetY.get();
+    }
+
+    public static int getInventoryLevelBarOffsetX() {
+        return LevelUpClientConfig.CLIENT.inventoryLevelBarOffsetX.get();
+    }
+
+    public static int getInventoryLevelBarOffsetY() {
+        return LevelUpClientConfig.CLIENT.inventoryLevelBarOffsetY.get();
+    }
 
     public static int getLevelBarWidth() {
         return LevelBarRenderer.BAR_WIDTH;
