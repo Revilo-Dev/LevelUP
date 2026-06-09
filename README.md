@@ -6,8 +6,8 @@ It provides a public API and event hooks so other mods can read player level, gr
 ## Core Features
 
 - Separate LevelUP XP and level progression from vanilla XP.
-- Configurable XP curve, max level cap, hostile mob XP drops, and tagged mob XP drops.
-- Eligible mob kills drop LevelUP XP equal to `sources.mobKillXp`.
+- Configurable XP curve, max level cap, hostile mob level-orb drops, and tagged mob level-orb drops.
+- Eligible mob kills drop LevelUP level orbs based on `sources.mob_level_drop_base_value` and mob max health.
 - Server-side LevelUP XP orb entity and pickup flow.
 - Animated top-center HUD overlay for LevelUP XP gain feedback that stays active during chained XP gains, slides down from off-screen when shown, and slides back up when finished.
 - Optional always-on HUD mode that keeps the level bar in the same on-screen position as the temporary overlay.
@@ -25,13 +25,15 @@ Common config:
 - `progression.exponent` default `1.35`
 - `progression.levelMultiplier` default `0.75`
 - `progression.maxLevel` default `500`
-- `sources.enable_mob_kill_xp` default `true`
-  When `false`, mob kills will not drop any LevelUP XP.
-- `sources.mobKillXp` default `8`
-  Set to `0` to disable all LevelUP XP from mob kills.
-- `sources.drop_levels_only_from_mobs_with_tag` default `false`
-  When `false`, all hostile mobs drop LevelUP XP.
-  When `true`, only entity types in the `levelup:drops_levels` entity type tag drop LevelUP XP (`levelup:drop_levels` is also accepted for legacy setups).
+- `sources.mobs_drop_levels` default `true`
+  When `true`, hostile enemy mobs can drop LevelUP level orbs on player kills.
+- `sources.mob_level_drop_base_value` default `8`
+  Actual orb value is `base_value * max_health / 20`, rounded down with a minimum of `1`.
+  Set to `0` to disable all mob LevelUP level-orb drops.
+- `sources.only_tagged_mobs_drop_levels` default `false`
+  When `true`, only entity types in the `levelup:drops_levels` entity type tag drop LevelUP level orbs (`levelup:drop_levels` is also accepted for legacy setups).
+  This overrides the generic hostile mob mode.
+  If both `sources.mobs_drop_levels` and `sources.only_tagged_mobs_drop_levels` are `false`, mobs never drop levels.
 
 Client config:
 
@@ -64,7 +66,7 @@ Client config:
 
 ## Mob Tagging
 
-LevelUP supports entity type tagging to mark mobs as eligible for LevelUP XP drops when `sources.drop_levels_only_from_mobs_with_tag=true`.
+LevelUP supports entity type tagging to mark mobs as eligible for LevelUP level-orb drops when `sources.only_tagged_mobs_drop_levels=true`.
 
 - Entity type tag: add entity IDs to `data/levelup/tags/entity_types/drops_levels.json` in a datapack.
 
@@ -80,7 +82,7 @@ Examples:
 }
 ```
 
-Runtime scoreboard tags such as `Tags:["drops_levels"]` are not used for LevelUP mob XP eligibility.
+Runtime scoreboard tags such as `Tags:["drops_levels"]` are not used for LevelUP mob drop eligibility.
 
 ## Commands
 
