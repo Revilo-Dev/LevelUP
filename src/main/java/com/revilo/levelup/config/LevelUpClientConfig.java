@@ -3,6 +3,7 @@ package com.revilo.levelup.config;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class LevelUpClientConfig {
+    public static final String CLIENT_FILE_NAME = "levelup-client.toml";
     public static final ModConfigSpec SPEC;
     public static final Client CLIENT;
 

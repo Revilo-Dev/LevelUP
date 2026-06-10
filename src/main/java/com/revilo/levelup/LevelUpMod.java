@@ -13,7 +13,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -22,21 +21,17 @@ public final class LevelUpMod {
     public static final String MOD_ID = "levelup";
 
     public LevelUpMod(IEventBus modBus, ModContainer modContainer) {
+        LevelUpConfig.prepareCommonConfigFile();
         LevelUpAttachments.REGISTER.register(modBus);
         LevelUpEntities.REGISTER.register(modBus);
         LevelUpItems.REGISTER.register(modBus);
         modBus.addListener(LevelUpNetwork::onRegisterPayloadHandlers);
-        modBus.addListener(LevelUpMod::onConfigLoaded);
         NeoForge.EVENT_BUS.addListener(LevelUpCommands::onRegisterCommands);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(LevelUpClientEvents::onRegisterRenderers);
             modBus.addListener(LevelUpClientEvents::onRegisterGuiLayers);
-            modContainer.registerConfig(ModConfig.Type.CLIENT, LevelUpClientConfig.SPEC);
+            modContainer.registerConfig(ModConfig.Type.CLIENT, LevelUpClientConfig.SPEC, LevelUpClientConfig.CLIENT_FILE_NAME);
         }
-        modContainer.registerConfig(ModConfig.Type.COMMON, LevelUpConfig.SPEC);
-    }
-
-    private static void onConfigLoaded(ModConfigEvent event) {
-        LevelUpConfig.migrateCommonConfig(event.getConfig());
+        modContainer.registerConfig(ModConfig.Type.COMMON, LevelUpConfig.SPEC, LevelUpConfig.COMMON_FILE_NAME);
     }
 }

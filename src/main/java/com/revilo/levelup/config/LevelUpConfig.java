@@ -4,7 +4,6 @@ import com.revilo.levelup.registry.LevelUpTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
-import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
@@ -15,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class LevelUpConfig {
+    public static final String COMMON_FILE_NAME = "levelup-common.toml";
     public static final ModConfigSpec SPEC;
     public static final Common COMMON;
     private static final Pattern SOURCES_SECTION_PATTERN = Pattern.compile("(?ms)(\\[sources]\\s*\\R)(.*?)(?=^\\[|\\z)");
@@ -27,24 +27,17 @@ public final class LevelUpConfig {
 
     private LevelUpConfig() {}
 
-    public static void migrateCommonConfig(ModConfig modConfig) {
-        if (modConfig.getSpec() != SPEC) {
-            return;
-        }
-        Path configPath = FMLPaths.CONFIGDIR.get().resolve(modConfig.getFileName());
+    public static void prepareCommonConfigFile() {
+        Path configPath = FMLPaths.CONFIGDIR.get().resolve(COMMON_FILE_NAME);
         if (!Files.isRegularFile(configPath)) {
             return;
         }
         try {
             String configText = Files.readString(configPath);
-            boolean hasNewKeys = containsSourceKey(configText, "mobs_drop_levels")
-                    || containsSourceKey(configText, "only_tagged_mobs_drop_levels")
-                    || containsSourceKey(configText, "mob_level_drop_base_value");
             boolean hasLegacyKeys = containsSourceKey(configText, "enable_mob_kill_xp")
                     || containsSourceKey(configText, "drop_levels_only_from_mobs_with_tag")
                     || containsSourceKey(configText, "mobKillXp");
-            COMMON.setUseLegacyMobDropConfig(!hasNewKeys && hasLegacyKeys);
-            if (hasNewKeys || !hasLegacyKeys) {
+            if (!hasLegacyKeys) {
                 return;
             }
 
@@ -58,9 +51,7 @@ public final class LevelUpConfig {
             if (!migrated.equals(configText)) {
                 Files.writeString(configPath, migrated);
             }
-        } catch (IOException ignored) {
-            COMMON.setUseLegacyMobDropConfig(false);
-        }
+        } catch (IOException ignored) {}
     }
 
     private static boolean containsSourceKey(String configText, String key) {
@@ -118,11 +109,6 @@ public final class LevelUpConfig {
         public final ModConfigSpec.BooleanValue mobsDropLevels;
         public final ModConfigSpec.IntValue mobLevelDropBaseValue;
         public final ModConfigSpec.BooleanValue onlyTaggedMobsDropLevels;
-        private final ModConfigSpec.BooleanValue legacyEnableMobKillXp;
-        private final ModConfigSpec.IntValue legacyMobKillXp;
-        private final ModConfigSpec.BooleanValue legacyDropLevelsOnlyFromMobsWithTag;
-        private boolean useLegacyMobDropConfig;
-
         private Common(ModConfigSpec.Builder builder) {
             builder.push("progression");
             baseXpPerLevel = builder.comment("Base XP needed at level 1.")
@@ -154,12 +140,6 @@ public final class LevelUpConfig {
                             "If both `mobs_drop_levels` and `only_tagged_mobs_drop_levels` are false, mobs never drop levels."
                     )
                     .define("only_tagged_mobs_drop_levels", false);
-            legacyEnableMobKillXp = builder.comment("Deprecated legacy key. Migrated to `mobs_drop_levels`.")
-                    .define("enable_mob_kill_xp", true);
-            legacyMobKillXp = builder.comment("Deprecated legacy key. Migrated to `mob_level_drop_base_value`.")
-                    .defineInRange("mobKillXp", 8, 0, Integer.MAX_VALUE);
-            legacyDropLevelsOnlyFromMobsWithTag = builder.comment("Deprecated legacy key. Migrated to `only_tagged_mobs_drop_levels`.")
-                    .define("drop_levels_only_from_mobs_with_tag", false);
             builder.pop();
         }
 
@@ -175,7 +155,7 @@ public final class LevelUpConfig {
         }
 
         public int getMobLevelDropAmount(LivingEntity entity) {
-            int baseValue = getMobLevelDropBaseValue();
+            int baseValue = mobLevelDropBaseValue.get();
             if (baseValue <= 0) {
                 return 0;
             }
@@ -184,19 +164,11 @@ public final class LevelUpConfig {
         }
 
         private boolean areMobLevelDropsEnabled() {
-            return useLegacyMobDropConfig ? legacyEnableMobKillXp.get() : mobsDropLevels.get();
+            return mobsDropLevels.get();
         }
 
         private boolean isOnlyTaggedMobsDropLevelsEnabled() {
-            return useLegacyMobDropConfig ? legacyDropLevelsOnlyFromMobsWithTag.get() : onlyTaggedMobsDropLevels.get();
-        }
-
-        private int getMobLevelDropBaseValue() {
-            return useLegacyMobDropConfig ? legacyMobKillXp.get() : mobLevelDropBaseValue.get();
-        }
-
-        private void setUseLegacyMobDropConfig(boolean useLegacyMobDropConfig) {
-            this.useLegacyMobDropConfig = useLegacyMobDropConfig;
+            return onlyTaggedMobsDropLevels.get();
         }
     }
 }
