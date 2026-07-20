@@ -2,6 +2,7 @@ package com.revilo.levelup.event;
 
 import com.revilo.levelup.LevelUpMod;
 import com.revilo.levelup.api.LevelUpApi;
+import com.revilo.levelup.api.event.PlayerLevelDataLoadedEvent;
 import com.revilo.levelup.config.LevelUpConfig;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +14,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 @EventBusSubscriber(modid = LevelUpMod.MOD_ID)
 public final class LevelUpGameplayEvents {
@@ -21,6 +23,9 @@ public final class LevelUpGameplayEvents {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            LevelUpApi.getPlayerData(player).ifPresent(data ->
+                    NeoForge.EVENT_BUS.post(new PlayerLevelDataLoadedEvent(player, data))
+            );
             LevelUpApi.sync(player);
         }
     }

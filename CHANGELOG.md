@@ -4,6 +4,25 @@
 
 ### Added
 
+- Public API v2 for integration mods:
+  - `LevelUpApi.API_VERSION`, `getApiVersion()`, and `getCapabilities()`.
+  - `LevelUpPlayerView` read-only player progression data.
+  - `LevelCurve` access through `LevelUpApi.getActiveLevelCurve()`.
+  - `LevelChangeResult` return values with crossed-level and crossed-milestone helpers.
+  - Source-aware `addExperience`, `setExperience`, `addLevels`, `setLevel`, and `reset` methods.
+  - `getHighestLevelReached()`, `getMaximumLevel()`, and `isAtMaximumLevel()`.
+- New integration events:
+  - `PlayerLevelChangeEvent`.
+  - `PlayerLevelMilestoneEvent`.
+  - `PlayerExperienceChangeEvent`.
+  - `PlayerLevelDataLoadedEvent`.
+- Milestone registration API via `LevelUpApi.registerMilestone(id, interval)`.
+- Batched progression transactions now report skipped levels and milestones without repeated syncs.
+- Highest-level tracking is serialized with player progression data and synchronized to clients.
+- Client data update listener API:
+  - `LevelUpClientApi.onDataUpdated(...)`
+  - `LevelUpClientApi.removeDataUpdatedListener(...)`
+  - `LevelUpClientApi.getLocalLevelProgressDisplay()`
 - New mob level-drop config:
   - `sources.mobs_drop_levels`
   - `sources.mob_level_drop_base_value`
@@ -35,11 +54,14 @@
 
 ### Changed
 
+- `/level` progression mutation commands now use source-aware API calls so events identify command-driven changes.
+- Resetting LevelUP data now resets highest-level tracking to the resulting current level.
 - HUD display toggle now acts as a hard override for the LevelUP HUD (including bottom-mode vanilla XP bar suppression behavior).
 - Updated docs to clarify:
   - `drops_levels` is an entity type tag datapack entry.
   - How to use the new GUI helper APIs.
+  - How integration mods consume player views, transactions, milestones, events, and curve data.
 
 ### Verified
 
-- `.\gradlew.bat compileJava`
+- `.\gradlew.bat compileJava` currently blocked in this environment by Gradle SSL trust failures resolving Minecraft/NeoForge Maven artifacts.

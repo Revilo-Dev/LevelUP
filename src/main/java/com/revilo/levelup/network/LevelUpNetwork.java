@@ -27,6 +27,12 @@ public final class LevelUpNetwork {
 
     public static void syncPlayer(ServerPlayer player, boolean showOverlay) {
         PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
-        PacketDistributor.sendToPlayer(player, new S2CPlayerProgressionSyncPacket(data.getLevel(), data.getXp(), data.getMultiplier(), showOverlay));
+        PacketDistributor.sendToPlayer(player, new S2CPlayerProgressionSyncPacket(
+                data.getLevel(),
+                data.getXp(),
+                data.getMultiplier(),
+                data.getHighestLevelReached(),
+                showOverlay
+        ));
     }
 }

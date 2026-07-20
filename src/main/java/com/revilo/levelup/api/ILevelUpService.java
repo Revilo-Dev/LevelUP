@@ -6,12 +6,27 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Optional;
+import java.util.OptionalInt;
+
 public interface ILevelUpService {
+    String getApiVersion();
+
+    LevelUpCapabilities getCapabilities();
+
     int getMaxLevel();
+
+    OptionalInt getMaximumLevel();
 
     double getLevelMultiplier();
 
+    Optional<LevelUpPlayerView> getPlayerData(ServerPlayer player);
+
+    LevelCurve getActiveLevelCurve();
+
     int getLevel(Player player);
+
+    int getHighestLevelReached(Player player);
 
     long getXp(Player player);
 
@@ -31,9 +46,21 @@ public interface ILevelUpService {
 
     boolean meetsLevelRequirement(Player player, int requiredLevel);
 
+    boolean isAtMaximumLevel(ServerPlayer player);
+
+    void registerMilestone(ResourceLocation id, int interval);
+
+    LevelChangeResult addExperience(ServerPlayer player, long amount, ResourceLocation source);
+
     long addXp(ServerPlayer player, long amount, ResourceLocation source);
 
-    long addLevels(ServerPlayer player, int levels, ResourceLocation source);
+    LevelChangeResult setExperience(ServerPlayer player, long xp, ResourceLocation source);
+
+    LevelChangeResult addLevels(ServerPlayer player, int levels, ResourceLocation source);
+
+    LevelChangeResult setLevel(ServerPlayer player, int level, ResourceLocation source);
+
+    LevelChangeResult reset(ServerPlayer player, ResourceLocation source);
 
     void setXp(ServerPlayer player, long xp);
 

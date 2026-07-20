@@ -139,7 +139,7 @@ public final class LevelUpCommands {
 
     private static int addLevel(CommandSourceStack source, ServerPlayer player, int amount) {
         int nextLevel = Math.max(0, LevelUpApi.getLevel(player) + amount);
-        LevelUpApi.setLevel(player, nextLevel);
+        LevelUpApi.setLevel(player, nextLevel, LevelUpSources.COMMAND);
         source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " is now level " + LevelUpApi.getLevel(player) + "."), true);
         return 1;
     }
@@ -152,13 +152,13 @@ public final class LevelUpCommands {
     }
 
     private static int setXp(CommandSourceStack source, ServerPlayer player, long amount) {
-        LevelUpApi.setXp(player, amount);
+        LevelUpApi.setExperience(player, amount, LevelUpSources.COMMAND);
         source.sendSuccess(() -> Component.literal("Set " + player.getGameProfile().getName() + " XP to " + amount + "."), true);
         return 1;
     }
 
     private static int setLevel(CommandSourceStack source, ServerPlayer player, int amount) {
-        LevelUpApi.setLevel(player, amount);
+        LevelUpApi.setLevel(player, amount, LevelUpSources.COMMAND);
         source.sendSuccess(() -> Component.literal("Set " + player.getGameProfile().getName() + " level to " + LevelUpApi.getLevel(player) + "."), true);
         return 1;
     }
@@ -170,8 +170,7 @@ public final class LevelUpCommands {
     }
 
     private static int reset(CommandSourceStack source, ServerPlayer player) {
-        LevelUpApi.setXpMultiplier(player, 1);
-        LevelUpApi.setXp(player, 0L);
+        LevelUpApi.reset(player, LevelUpSources.COMMAND);
         source.sendSuccess(() -> Component.literal("Reset LevelUP data for " + player.getGameProfile().getName() + "."), true);
         return 1;
     }

@@ -86,17 +86,17 @@ Runtime scoreboard tags such as `Tags:["drops_levels"]` are not used for LevelUP
 
 ## Commands
 
-- `/levels add xp <amount> <id>`
-- `/levels add level <amount> <id>`
-- `/levels add multiplier <amount> <id>`
-- `/levels set xp <amount> <id>`
-- `/levels set level <amount> <id>`
-- `/levels set multiplier <amount> <id>`
-- `/levels reset <id>`
-- `/levels spawnorbs <amount>`
-- `/levels pause <true|false>`
-- `/levels max <value>`
-- `/levels query <id>`
+- `/level add xp <amount> <id>`
+- `/level add level <amount> <id>`
+- `/level add multiplier <amount> <id>`
+- `/level set xp <amount> <id>`
+- `/level set level <amount> <id>`
+- `/level set multiplier <amount> <id>`
+- `/level reset <id>`
+- `/level spawnorbs <amount>`
+- `/level pause <true|false>`
+- `/level max <value>`
+- `/level query <id>`
 
 ## Included Content
 
@@ -107,21 +107,33 @@ Runtime scoreboard tags such as `Tags:["drops_levels"]` are not used for LevelUP
 
 Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 
+- `String API_VERSION` is the published API surface version.
+- `String getApiVersion()` returns the same API version at runtime.
+- `LevelUpCapabilities getCapabilities()` reports supported integration features.
+- `Optional<LevelUpPlayerView> getPlayerData(ServerPlayer player)` returns a stable read-only view without exposing attachments.
+- `LevelCurve getActiveLevelCurve()` exposes the active configured progression curve.
 - `int getLevel(Player player)` returns the player LevelUP level.
+- `int getHighestLevelReached(Player player)` returns the highest LevelUP level this player has reached.
 - `long getXp(Player player)` returns total stored LevelUP XP.
 - `int getXpMultiplier(Player player)` returns the stored per-player XP multiplier.
 - `long getXpIntoCurrentLevel(Player player)` returns the player's current progress inside their active level band.
 - `long getXpNeededForNextLevel(Player player)` returns remaining XP to level up.
 - `float getProgressToNextLevel(Player player)` returns 0..1 progress for current level.
 - `int getMaxLevel()` returns the active max level after config or runtime override resolution.
+- `OptionalInt getMaximumLevel()` returns the configured maximum level.
+- `boolean isAtMaximumLevel(ServerPlayer player)` checks whether the player is capped by the active max or lock.
 - `double getLevelMultiplier()` returns the active XP cost multiplier after config or runtime override resolution.
 - `long getXpForNextLevel(int currentLevel)` returns the XP cost to advance from the supplied level.
 - `long getTotalXpForLevel(int level)` returns the total XP floor for the supplied level.
 - `int levelForTotalXp(long totalXp)` resolves a raw total XP value into a LevelUP level using the active max level.
 - `boolean meetsLevelRequirement(Player player, int requiredLevel)` checks level gates.
+- `LevelChangeResult addExperience(ServerPlayer player, long amount, ResourceLocation source)` grants XP and returns previous/new XP, previous/new level, and crossed levels.
 - `long addXp(ServerPlayer player, long amount, ResourceLocation source)` grants XP and returns applied amount after event modifiers.
 - `void awardXp(ServerPlayer player, long amount, ResourceLocation source)` convenience wrapper for granting XP.
-- `long addLevels(ServerPlayer player, int levels, ResourceLocation source)` grants enough XP to add whole levels from the player's current progression, capped by max level.
+- `LevelChangeResult setExperience(ServerPlayer player, long xp, ResourceLocation source)` directly sets total XP, recalculates level, syncs, and fires events.
+- `LevelChangeResult addLevels(ServerPlayer player, int levels, ResourceLocation source)` grants enough XP to add whole levels from the player's current progression, capped by max level.
+- `LevelChangeResult setLevel(ServerPlayer player, int level, ResourceLocation source)` sets level by assigning total XP floor for that level.
+- `LevelChangeResult reset(ServerPlayer player, ResourceLocation source)` resets XP, level, multiplier, and highest-level tracking.
 - `void setXp(ServerPlayer player, long xp)` directly sets total XP and recalculates level.
 - `void setLevel(ServerPlayer player, int level)` sets level by assigning total XP floor for that level.
 - `void setXpMultiplier(ServerPlayer player, int multiplier)` sets the stored per-player XP multiplier.
@@ -136,6 +148,7 @@ Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 - `void setLevelMultiplierOverride(double levelMultiplier)` overrides the configured XP scaling multiplier until cleared.
 - `void clearLevelMultiplierOverride()` restores the configured XP scaling multiplier.
 - `void sync(ServerPlayer player)` forces network sync of progression data.
+- `void registerMilestone(ResourceLocation id, int interval)` registers a milestone interval. Crossing level 4 to 11 with interval `5` fires milestones `5` and `10`.
 - `void spawnLevelUpXpOrb(ServerLevel level, Vec3 position, int amount)` spawns LevelUP XP orbs.
 - `void spawnLevelUpXpOrb(ServerLevel level, double x, double y, double z, int amount)` coordinate overload for orb spawning.
 - `void spawnLevelUpXpOrbForLevel(ServerLevel level, Vec3 position, int level)` spawns LevelUP XP orbs worth the total XP floor for the supplied level.
@@ -143,6 +156,9 @@ Use static methods from `com.revilo.levelup.api.LevelUpApi`.
 
 Client GUI rendering API:
 
+- `com.revilo.levelup.api.LevelUpClientApi.onDataUpdated(listener)` registers a client display-data sync listener.
+- `com.revilo.levelup.api.LevelUpClientApi.removeDataUpdatedListener(listener)` unregisters a client sync listener.
+- `com.revilo.levelup.api.LevelUpClientApi.getLocalLevelProgressDisplay()` returns local display data for GUI refreshes.
 - `com.revilo.levelup.api.LevelUpClientApi.getLevelBarWidth()` returns level bar width.
 - `com.revilo.levelup.api.LevelUpClientApi.getLevelBarHeight()` returns level bar height.
 - `com.revilo.levelup.api.LevelUpClientApi.renderLevelBar(...)` renders the LevelUP bar with your provided progress/label.
@@ -168,9 +184,53 @@ All events are posted on `NeoForge.EVENT_BUS`.
 - `LevelUpXpGainedEvent#setAmount(long)` lets integrations scale or clamp incoming XP.
 - `LevelUpLevelChangedEvent` fires when stored level changes in either direction.
 - `LevelUpLevelChangedEvent.LevelUp` fires once per level gained when multiple levels are gained in one update.
+- `com.revilo.levelup.api.event.PlayerExperienceChangeEvent` fires after stored LevelUP XP changes and includes old XP, new XP, reason, and source.
+- `com.revilo.levelup.api.event.PlayerLevelChangeEvent` fires server-side after a player level changes and includes previous level, new level, reason, and source.
+- `com.revilo.levelup.api.event.PlayerLevelMilestoneEvent` fires for every registered milestone crossed during a level increase.
+- `com.revilo.levelup.api.event.PlayerLevelDataLoadedEvent` fires on the logical server during player login after LevelUP attachment data is available and before sync.
 - `LevelUpLevelLockChangedEvent` fires when a player's lock cap changes (`-1` means unlocked).
 - `LevelUpOutputEvent` fires only when level increases and includes old/new level, old/new XP, source, and levels gained.
 - `LevelUpHudDisplayEvent` can be posted client-side to force the HUD on-screen with custom text/progress for a duration.
+
+## Progression Transactions
+
+Use the result-returning APIs when integrating rewards, commands, quests, or another progression system.
+
+```java
+LevelChangeResult result = LevelUpApi.addExperience(
+        player,
+        100,
+        ResourceLocation.fromNamespaceAndPath("examplemod", "quest_reward")
+);
+
+for (int milestone : result.crossedMilestones(5)) {
+    // Award external milestone rewards from your own mod data.
+}
+```
+
+Large XP gains are treated as one transaction. A change from level `4` to `16` returns crossed levels `5` through `16`, and a 5-level milestone interval reports `5`, `10`, and `15`.
+
+## Milestone Events
+
+Register milestone intervals during common setup or integration initialization.
+
+```java
+LevelUpApi.registerMilestone(
+        ResourceLocation.fromNamespaceAndPath("knowledge", "knowledge_point"),
+        5
+);
+```
+
+Then consume milestone events without polling player data.
+
+```java
+@SubscribeEvent
+public static void onMilestone(PlayerLevelMilestoneEvent event) {
+    if (event.getMilestoneId().equals(ResourceLocation.fromNamespaceAndPath("knowledge", "knowledge_point"))) {
+        // Award Knowledge Points in the Knowledge mod.
+    }
+}
+```
 
 ## XP Source IDs
 

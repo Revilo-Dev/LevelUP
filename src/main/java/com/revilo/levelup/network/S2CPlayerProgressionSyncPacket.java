@@ -12,20 +12,21 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record S2CPlayerProgressionSyncPacket(int level, long xp, int multiplier, boolean showOverlay) implements CustomPacketPayload {
+public record S2CPlayerProgressionSyncPacket(int level, long xp, int multiplier, int highestLevelReached, boolean showOverlay) implements CustomPacketPayload {
     public static final Type<S2CPlayerProgressionSyncPacket> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "sync_player_progression"));
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CPlayerProgressionSyncPacket> STREAM_CODEC =
             CustomPacketPayload.codec(S2CPlayerProgressionSyncPacket::write, S2CPlayerProgressionSyncPacket::new);
 
     private S2CPlayerProgressionSyncPacket(RegistryFriendlyByteBuf buffer) {
-        this(buffer.readVarInt(), buffer.readVarLong(), buffer.readVarInt(), buffer.readBoolean());
+        this(buffer.readVarInt(), buffer.readVarLong(), buffer.readVarInt(), buffer.readVarInt(), buffer.readBoolean());
     }
 
     private void write(RegistryFriendlyByteBuf buffer) {
         buffer.writeVarInt(level);
         buffer.writeVarLong(xp);
         buffer.writeVarInt(multiplier);
+        buffer.writeVarInt(highestLevelReached);
         buffer.writeBoolean(showOverlay);
     }
 
@@ -42,8 +43,12 @@ public record S2CPlayerProgressionSyncPacket(int level, long xp, int multiplier,
             data.setLevel(payload.level());
             data.setXp(payload.xp());
             data.setMultiplier(payload.multiplier());
+            data.setHighestLevelReached(payload.highestLevelReached());
             if (payload.showOverlay() && FMLEnvironment.dist == Dist.CLIENT) {
                 ClientHooks.onProgressionUpdated(oldXp, payload.xp());
+            }
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                ClientHooks.onDataUpdated();
             }
         });
     }
@@ -53,6 +58,10 @@ public record S2CPlayerProgressionSyncPacket(int level, long xp, int multiplier,
 
         private static void onProgressionUpdated(long oldXp, long newXp) {
             com.revilo.levelup.client.gui.TopCenterLevelOverlay.onProgressionUpdated(oldXp, newXp);
+        }
+
+        private static void onDataUpdated() {
+            com.revilo.levelup.api.LevelUpClientApi.notifyDataUpdated();
         }
     }
 }

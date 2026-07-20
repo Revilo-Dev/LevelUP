@@ -6,21 +6,49 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Optional;
+import java.util.OptionalInt;
+
 public final class LevelUpApi {
+    public static final String API_VERSION = "2";
     private static final ILevelUpService SERVICE = LevelUpService.INSTANCE;
 
     private LevelUpApi() {}
 
+    public static String getApiVersion() {
+        return SERVICE.getApiVersion();
+    }
+
+    public static LevelUpCapabilities getCapabilities() {
+        return SERVICE.getCapabilities();
+    }
+
     public static int getMaxLevel() {
         return SERVICE.getMaxLevel();
+    }
+
+    public static OptionalInt getMaximumLevel() {
+        return SERVICE.getMaximumLevel();
     }
 
     public static double getLevelMultiplier() {
         return SERVICE.getLevelMultiplier();
     }
 
+    public static Optional<LevelUpPlayerView> getPlayerData(ServerPlayer player) {
+        return SERVICE.getPlayerData(player);
+    }
+
+    public static LevelCurve getActiveLevelCurve() {
+        return SERVICE.getActiveLevelCurve();
+    }
+
     public static int getLevel(Player player) {
         return SERVICE.getLevel(player);
+    }
+
+    public static int getHighestLevelReached(Player player) {
+        return SERVICE.getHighestLevelReached(player);
     }
 
     public static long getXp(Player player) {
@@ -59,6 +87,18 @@ public final class LevelUpApi {
         return SERVICE.meetsLevelRequirement(player, requiredLevel);
     }
 
+    public static boolean isAtMaximumLevel(ServerPlayer player) {
+        return SERVICE.isAtMaximumLevel(player);
+    }
+
+    public static void registerMilestone(ResourceLocation id, int interval) {
+        SERVICE.registerMilestone(id, interval);
+    }
+
+    public static LevelChangeResult addExperience(ServerPlayer player, long amount, ResourceLocation source) {
+        return SERVICE.addExperience(player, amount, source);
+    }
+
     public static long addXp(ServerPlayer player, long amount, ResourceLocation source) {
         return SERVICE.addXp(player, amount, source);
     }
@@ -67,8 +107,20 @@ public final class LevelUpApi {
         SERVICE.addXp(player, amount, source);
     }
 
-    public static long addLevels(ServerPlayer player, int levels, ResourceLocation source) {
+    public static LevelChangeResult setExperience(ServerPlayer player, long amount, ResourceLocation source) {
+        return SERVICE.setExperience(player, amount, source);
+    }
+
+    public static LevelChangeResult addLevels(ServerPlayer player, int levels, ResourceLocation source) {
         return SERVICE.addLevels(player, levels, source);
+    }
+
+    public static LevelChangeResult setLevel(ServerPlayer player, int level, ResourceLocation source) {
+        return SERVICE.setLevel(player, level, source);
+    }
+
+    public static LevelChangeResult reset(ServerPlayer player, ResourceLocation source) {
+        return SERVICE.reset(player, source);
     }
 
     public static void setXp(ServerPlayer player, long xp) {

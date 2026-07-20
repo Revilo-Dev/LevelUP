@@ -10,12 +10,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public final class LevelUpClientApi {
     private static final int TOP_HUD_LABEL_Y_OFFSET = 0;
     private static final boolean TOP_HUD_DRAW_BACKGROUND = true;
     private static final boolean TOP_HUD_DRAW_LABEL = true;
     private static final float TOP_HUD_ALPHA = 1.0F;
+    private static final CopyOnWriteArrayList<Consumer<LevelProgressDisplay>> DATA_UPDATE_LISTENERS = new CopyOnWriteArrayList<>();
 
     private LevelUpClientApi() {}
 
@@ -59,6 +62,35 @@ public final class LevelUpClientApi {
 
     public static int getLevelBarHeight() {
         return LevelBarRenderer.BAR_HEIGHT;
+    }
+
+    public static void onDataUpdated(Consumer<LevelProgressDisplay> listener) {
+        DATA_UPDATE_LISTENERS.add(listener);
+    }
+
+    public static void removeDataUpdatedListener(Consumer<LevelProgressDisplay> listener) {
+        DATA_UPDATE_LISTENERS.remove(listener);
+    }
+
+    public static LevelProgressDisplay getLocalLevelProgressDisplay() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return new LevelProgressDisplay(0, 0L, 0L, 0.0F);
+        }
+
+        return new LevelProgressDisplay(
+                LevelUpApi.getLevel(minecraft.player),
+                LevelUpApi.getXpIntoCurrentLevel(minecraft.player),
+                LevelUpApi.getXpForNextLevel(LevelUpApi.getLevel(minecraft.player)),
+                LevelUpApi.getProgressToNextLevel(minecraft.player)
+        );
+    }
+
+    public static void notifyDataUpdated() {
+        LevelProgressDisplay display = getLocalLevelProgressDisplay();
+        for (Consumer<LevelProgressDisplay> listener : DATA_UPDATE_LISTENERS) {
+            listener.accept(display);
+        }
     }
 
     public static void renderLevelBar(GuiGraphics guiGraphics, int x, int y, float progress, Component label) {
