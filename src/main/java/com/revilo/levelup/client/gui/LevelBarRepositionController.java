@@ -18,6 +18,10 @@ public final class LevelBarRepositionController {
     }
 
     public static void onClientTick() {
+        if (!LevelUpClientConfig.SPEC.isLoaded()) {
+            return;
+        }
+
         if (pendingTarget == null) {
             if (LevelUpClientConfig.CLIENT.openHudLevelBarRepositionGui.get()) {
                 LevelUpClientConfig.CLIENT.openHudLevelBarRepositionGui.set(false);

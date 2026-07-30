@@ -1,0 +1,71 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'wiki/**'
+      - '.github/workflows/wiki-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate wiki source
+        run: |
+          test -f wiki/Home.md || { echo "wiki/Home.md is required"; exit 1; }
+
+      - name: Clone wiki repository
+        env:
+          WIKI_PUSH_TOKEN: ${{ secrets.WIKI_PUSH_TOKEN }}
+        run: |
+          if [ -z "$WIKI_PUSH_TOKEN" ]; then
+            echo "Missing WIKI_PUSH_TOKEN secret."
+            exit 1
+          fi
+
+          WIKI_URL="https://x-access-token:${WIKI_PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git"
+
+          if ! git ls-remote "$WIKI_URL" >/dev/null 2>&1; then
+            echo "Wiki repository is not available yet."
+            echo "Enable the wiki in repository settings and create the first wiki page once on GitHub."
+            exit 1
+          fi
+
+          git clone "$WIKI_URL" "$RUNNER_TEMP/wiki-repo"
+
+      - name: Sync files into wiki repository
+        run: |
+          rsync -av --delete \
+            --exclude '.git/' \
+            wiki/ "$RUNNER_TEMP/wiki-repo/"
+
+      - name: Commit and push wiki changes
+        working-directory: ${{ runner.temp }}/wiki-repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No wiki changes to publish."
+            exit 0
+          fi
+
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No staged wiki changes to publish."
+            exit 0
+          fi
+
+          git commit -m "Sync wiki from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+          git push origin HEAD

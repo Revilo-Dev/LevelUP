@@ -39,6 +39,8 @@
 
 ### Fixed
 
+- Updated NeoGradle userdev to `7.1.38` to avoid stale NeoForm recompile output missing Minecraft classes such as `AudioStream`, `Position`, and `StreamCodec`.
+- Disabled Parchment mapping application to avoid NeoGradle `ExtensionInfo` binary representation failures during `neoFormApplyParchment`.
 - Fixed players receiving LevelUP XP from self-damage edge cases.
 - Fixed mob LevelUP XP checks so only valid player melee kills (`minecraft:player_attack`) can spawn LevelUP orb XP.
 - Fixed mob level-drop rules:

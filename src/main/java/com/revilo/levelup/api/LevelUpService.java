@@ -26,9 +26,9 @@ import java.util.OptionalInt;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class LevelUpService implements ILevelUpService {
-    public static final LevelUpService INSTANCE = new LevelUpService();
     private static final int DEFAULT_MILESTONE_INTERVAL = 5;
     private static final ResourceLocation DEFAULT_MILESTONE_ID = LevelUpSources.id("default_5_level_milestone");
+    public static final LevelUpService INSTANCE = new LevelUpService();
     private static final LevelUpCapabilities CAPABILITIES = new LevelUpCapabilities(
             true,
             true,
