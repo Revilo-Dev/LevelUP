@@ -4,6 +4,7 @@ import com.revilo.levelup.api.LevelUpProgressionOverrides;
 import com.revilo.levelup.config.LevelUpConfig;
 
 public final class LevelFormula {
+    // progression bands
     private static final int SLOW_END_LEVEL_EXCLUSIVE = 10;
     private static final int MEDIUM_END_LEVEL_EXCLUSIVE = 50;
     private static final int FAST_END_LEVEL_EXCLUSIVE = 90;
@@ -18,9 +19,11 @@ public final class LevelFormula {
     public static long xpForNextLevel(int currentLevel) {
         int safeLevel = Math.max(0, currentLevel);
         if (safeLevel >= FAST_END_LEVEL_EXCLUSIVE && safeLevel < PEAK_END_LEVEL_EXCLUSIVE) {
+            // level ninety bridge
             return peakBandXpForLevel(safeLevel);
         }
 
+        // configured curve
         double base = LevelUpConfig.COMMON.baseXpPerLevel.get();
         double linear = LevelUpConfig.COMMON.linearXpPerLevel.get();
         double exponent = LevelUpConfig.COMMON.exponent.get();
@@ -34,6 +37,7 @@ public final class LevelFormula {
     public static long totalXpForLevel(int level) {
         int safeLevel = Math.max(0, level);
         long total = 0L;
+        // cumulative cost
         for (int i = 0; i < safeLevel; i++) {
             total = saturatingAdd(total, xpForNextLevel(i));
         }
@@ -44,6 +48,7 @@ public final class LevelFormula {
         long safeXp = Math.max(0L, totalXp);
         int clampedMax = Math.max(0, maxLevel);
         int level = 0;
+        // spend xp into levels
         while (level < clampedMax) {
             long nextCost = xpForNextLevel(level);
             if (safeXp < nextCost) {
@@ -82,6 +87,7 @@ public final class LevelFormula {
             totalToNinety = saturatingAdd(totalToNinety, xpForNextLevel(i));
         }
 
+        // spread previous total
         int peakSpan = PEAK_END_LEVEL_EXCLUSIVE - FAST_END_LEVEL_EXCLUSIVE;
         long baseShare = Math.max(1L, totalToNinety / peakSpan);
         long remainder = totalToNinety % peakSpan;

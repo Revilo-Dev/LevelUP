@@ -3,6 +3,7 @@
   "item.levelup.test_skill_orb": "Test Skill Orb",
   "entity.levelup.level_orb": "Level Orb",
   "levelup.ui.level": "Level %s",
+  "levelup.ui.tab_list_name": "[Lv. %s] %s",
   "levelup.ui.requirement": "Level %s / %s",
   "levelup.ui.requirement_met": "Level %s / %s",
   "levelup.ui.reward_preview": "Level %s (+%s XP)",

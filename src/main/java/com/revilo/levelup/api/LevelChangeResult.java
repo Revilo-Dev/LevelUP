@@ -12,6 +12,7 @@ public record LevelChangeResult(
         List<Integer> crossedLevels
 ) {
     public LevelChangeResult {
+        // immutable level list
         crossedLevels = List.copyOf(crossedLevels);
     }
 
@@ -25,6 +26,7 @@ public record LevelChangeResult(
         }
 
         List<Integer> milestones = new ArrayList<>();
+        // crossed milestone filter
         for (int level : crossedLevels) {
             if (level > 0 && level % interval == 0) {
                 milestones.add(level);

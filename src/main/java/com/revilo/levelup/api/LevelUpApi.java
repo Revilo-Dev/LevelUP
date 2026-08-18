@@ -11,6 +11,7 @@ import java.util.OptionalInt;
 
 public final class LevelUpApi {
     public static final String API_VERSION = "2";
+    // api delegate
     private static final ILevelUpService SERVICE = LevelUpService.INSTANCE;
 
     private LevelUpApi() {}
@@ -99,10 +100,12 @@ public final class LevelUpApi {
         return SERVICE.addExperience(player, amount, source);
     }
 
+    // legacy helper
     public static long addXp(ServerPlayer player, long amount, ResourceLocation source) {
         return SERVICE.addXp(player, amount, source);
     }
 
+    // legacy helper
     public static void awardXp(ServerPlayer player, long amount, ResourceLocation source) {
         SERVICE.addXp(player, amount, source);
     }
@@ -183,6 +186,7 @@ public final class LevelUpApi {
         SERVICE.spawnXpOrb(level, position, amount);
     }
 
+    // coordinate overload
     public static void spawnLevelUpXpOrb(ServerLevel level, double x, double y, double z, int amount) {
         SERVICE.spawnXpOrb(level, x, y, z, amount);
     }
@@ -191,6 +195,7 @@ public final class LevelUpApi {
         SERVICE.spawnXpOrbForLevel(serverLevel, position, targetLevel);
     }
 
+    // coordinate overload
     public static void spawnLevelUpXpOrbForLevel(ServerLevel serverLevel, double x, double y, double z, int targetLevel) {
         SERVICE.spawnXpOrbForLevel(serverLevel, x, y, z, targetLevel);
     }

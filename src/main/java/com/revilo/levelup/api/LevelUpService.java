@@ -29,6 +29,7 @@ public final class LevelUpService implements ILevelUpService {
     private static final int DEFAULT_MILESTONE_INTERVAL = 5;
     private static final ResourceLocation DEFAULT_MILESTONE_ID = LevelUpSources.id("default_5_level_milestone");
     public static final LevelUpService INSTANCE = new LevelUpService();
+    // advertised api features
     private static final LevelUpCapabilities CAPABILITIES = new LevelUpCapabilities(
             true,
             true,
@@ -39,6 +40,7 @@ public final class LevelUpService implements ILevelUpService {
             true,
             true
     );
+    // configured level curve
     private static final LevelCurve ACTIVE_LEVEL_CURVE = new LevelCurve() {
         @Override
         public long experienceRequiredForLevel(int level) {
@@ -187,16 +189,19 @@ public final class LevelUpService implements ILevelUpService {
     @Override
     public LevelChangeResult addExperience(ServerPlayer player, long amount, ResourceLocation source) {
         if (paused) {
+            // global xp pause
             PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
             return LevelChangeResult.unchanged(data.getLevel(), data.getXp());
         }
 
+        // ignore negative gains
         long safeAmount = Math.max(0L, amount);
         if (safeAmount == 0L) {
             PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
             return LevelChangeResult.unchanged(data.getLevel(), data.getXp());
         }
 
+        // cancellable gain event
         LevelUpXpGainedEvent event = new LevelUpXpGainedEvent(player, source, safeAmount);
         if (NeoForge.EVENT_BUS.post(event).isCanceled()) {
             PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
@@ -214,6 +219,7 @@ public final class LevelUpService implements ILevelUpService {
         }
 
         PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+        // multiplier safe add
         long newXp = LevelFormula.saturatingAdd(data.getXp(), gain);
         return applyExperience(player, newXp, source, reasonForExperienceGain(source), true);
     }
@@ -274,23 +280,28 @@ public final class LevelUpService implements ILevelUpService {
         int oldLevel = data.getLevel();
         long oldXp = data.getXp();
         int maxLevel = getEffectiveMaxLevel(data);
+        // cap stored xp
         long clampedXp = Math.min(Math.max(0L, xp), LevelFormula.totalXpForLevel(maxLevel));
         data.setXp(clampedXp);
         int newLevel = LevelFormula.levelForXp(data.getXp(), maxLevel);
         data.setLevel(newLevel);
         LevelChangeResult result = new LevelChangeResult(oldLevel, newLevel, oldXp, data.getXp(), crossedLevels(oldLevel, newLevel));
         if (oldXp != data.getXp()) {
+            // xp event
             NeoForge.EVENT_BUS.post(new PlayerExperienceChangeEvent(player, oldXp, data.getXp(), reason, safeSource));
         }
         if (newLevel != oldLevel) {
+            // level events
             NeoForge.EVENT_BUS.post(new LevelUpLevelChangedEvent(player, oldLevel, newLevel));
             NeoForge.EVENT_BUS.post(new PlayerLevelChangeEvent(player, oldLevel, newLevel, reason, safeSource));
             if (newLevel > oldLevel) {
+                // level up outputs
                 NeoForge.EVENT_BUS.post(new LevelUpOutputEvent(player, oldLevel, newLevel, oldXp, data.getXp(), safeSource));
                 for (int level : result.crossedLevels()) {
                     NeoForge.EVENT_BUS.post(new LevelUpLevelChangedEvent.LevelUp(player, level - 1, level));
                 }
                 for (Map.Entry<ResourceLocation, Integer> entry : milestones.entrySet()) {
+                    // milestone events
                     for (int milestone : result.crossedMilestones(entry.getValue())) {
                         NeoForge.EVENT_BUS.post(new PlayerLevelMilestoneEvent(player, entry.getKey(), milestone, oldLevel, newLevel, reason, safeSource));
                     }
@@ -333,6 +344,7 @@ public final class LevelUpService implements ILevelUpService {
         int maxLevel = getEffectiveMaxLevel(data);
         long maxXp = LevelFormula.totalXpForLevel(maxLevel);
         if (data.getXp() > maxXp || data.getLevel() > maxLevel) {
+            // trim over lock cap
             applyExperience(player, maxXp, LevelUpSources.UNKNOWN, LevelChangeReason.API, false);
             return;
         }
@@ -430,6 +442,7 @@ public final class LevelUpService implements ILevelUpService {
         int maxLevel = getMaxLevel();
         int lockedLevel = data.getLockedLevel();
         if (lockedLevel >= 0) {
+            // lock cap override
             maxLevel = Math.min(maxLevel, lockedLevel);
         }
         return Math.max(0, maxLevel);
@@ -440,6 +453,7 @@ public final class LevelUpService implements ILevelUpService {
             return new ArrayList<>();
         }
         ArrayList<Integer> levels = new ArrayList<>(newLevel - oldLevel);
+        // each crossed level
         for (int level = oldLevel + 1; level <= newLevel; level++) {
             levels.add(level);
         }

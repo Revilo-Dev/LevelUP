@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 public final class PlayerProgressionData {
+    // saved player data
     public static final Codec<PlayerProgressionData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.fieldOf("level").forGetter(PlayerProgressionData::getLevel),
             Codec.LONG.fieldOf("xp").forGetter(PlayerProgressionData::getXp),
@@ -23,6 +24,7 @@ public final class PlayerProgressionData {
     }
 
     public PlayerProgressionData(int level, long xp, int multiplier, int lockedLevel, int highestLevelReached) {
+        // safe loaded values
         this.level = Math.max(0, level);
         this.xp = Math.max(0L, xp);
         this.multiplier = Math.max(0, multiplier);
@@ -36,6 +38,7 @@ public final class PlayerProgressionData {
 
     public void setLevel(int level) {
         this.level = Math.max(0, level);
+        // best level record
         this.highestLevelReached = Math.max(this.highestLevelReached, this.level);
     }
 

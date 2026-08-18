@@ -13,11 +13,17 @@ public final class LevelUpNetwork {
     private LevelUpNetwork() {}
 
     public static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
+        // client sync packet
         PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION);
         registrar.playToClient(
                 S2CPlayerProgressionSyncPacket.TYPE,
                 S2CPlayerProgressionSyncPacket.STREAM_CODEC,
                 S2CPlayerProgressionSyncPacket::handle
+        );
+        registrar.playToClient(
+                S2CPlayerLevelDisplaySyncPacket.TYPE,
+                S2CPlayerLevelDisplaySyncPacket.STREAM_CODEC,
+                S2CPlayerLevelDisplaySyncPacket::handle
         );
     }
 
@@ -27,6 +33,7 @@ public final class LevelUpNetwork {
 
     public static void syncPlayer(ServerPlayer player, boolean showOverlay) {
         PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+        // attachment snapshot
         PacketDistributor.sendToPlayer(player, new S2CPlayerProgressionSyncPacket(
                 data.getLevel(),
                 data.getXp(),
@@ -34,5 +41,14 @@ public final class LevelUpNetwork {
                 data.getHighestLevelReached(),
                 showOverlay
         ));
+        player.refreshTabListName();
+        PacketDistributor.sendToAllPlayers(new S2CPlayerLevelDisplaySyncPacket(player.getUUID(), data.getLevel()));
+    }
+
+    public static void syncAllDisplayLevels(ServerPlayer recipient) {
+        for (ServerPlayer player : recipient.server.getPlayerList().getPlayers()) {
+            PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
+            PacketDistributor.sendToPlayer(recipient, new S2CPlayerLevelDisplaySyncPacket(player.getUUID(), data.getLevel()));
+        }
     }
 }

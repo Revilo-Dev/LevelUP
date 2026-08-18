@@ -60,6 +60,7 @@ public final class LevelBarRenderer {
             boolean useBottomBackground
     ) {
         float clampedAlpha = Math.max(0.0F, Math.min(1.0F, alpha));
+        // texture fill width
         int progressWidth = Math.max(0, Math.min(BAR_WIDTH, Math.round(progress * BAR_WIDTH)));
 
         if (drawBackground) {
@@ -99,6 +100,7 @@ public final class LevelBarRenderer {
             return DEFAULT_COLOR;
         }
 
+        // safe hex config
         String normalized = raw.trim();
         if (normalized.startsWith("#")) {
             normalized = normalized.substring(1);

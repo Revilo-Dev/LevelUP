@@ -11,6 +11,7 @@ public final class LevelUpProgressionOverrides {
     public static int getMaxLevel() {
         Integer override = maxLevelOverride;
         if (override != null) {
+            // runtime max override
             return override;
         }
         return LevelUpConfig.COMMON.maxLevel.get();
@@ -19,6 +20,7 @@ public final class LevelUpProgressionOverrides {
     public static double getLevelMultiplier() {
         Double override = levelMultiplierOverride;
         if (override != null) {
+            // runtime multiplier override
             return override;
         }
         return LevelUpConfig.COMMON.levelMultiplier.get();

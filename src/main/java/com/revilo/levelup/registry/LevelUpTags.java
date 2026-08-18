@@ -7,10 +7,12 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 
 public final class LevelUpTags {
+    // current mob drop tag
     public static final TagKey<EntityType<?>> DROPS_LEVELS = TagKey.create(
             Registries.ENTITY_TYPE,
             ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "drops_levels")
     );
+    // old mob drop tag
     public static final TagKey<EntityType<?>> LEGACY_DROP_LEVELS = TagKey.create(
             Registries.ENTITY_TYPE,
             ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "drop_levels")

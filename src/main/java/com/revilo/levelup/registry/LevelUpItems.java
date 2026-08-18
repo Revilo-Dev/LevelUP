@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 public final class LevelUpItems {
     public static final DeferredRegister.Items REGISTER = DeferredRegister.createItems(LevelUpMod.MOD_ID);
 
+    // test reward item
     public static final Supplier<Item> TEST_SKILL_ORB = REGISTER.register(
             "test_skill_orb",
             () -> new LevelUpXpRewardItem(20L, new Item.Properties().stacksTo(64))

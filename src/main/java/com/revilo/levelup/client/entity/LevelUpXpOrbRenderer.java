@@ -32,11 +32,13 @@ public class LevelUpXpOrbRenderer extends EntityRenderer<LevelUpXpOrbEntity> {
     public void render(LevelUpXpOrbEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         int icon = entity.getIcon();
+        // texture atlas coords
         float u0 = (float) (icon % 4 * 16) / 64.0F;
         float u1 = (float) (icon % 4 * 16 + 16) / 64.0F;
         float v0 = (float) (icon / 4 * 16) / 64.0F;
         float v1 = (float) (icon / 4 * 16 + 16) / 64.0F;
 
+        // blue pulse
         float pulse = ((float) entity.tickCount + partialTicks) / 2.0F;
         int red = (int) ((Mth.sin(pulse + (float) (Math.PI * 4.0 / 3.0)) + 1.0F) * 0.08F * 255.0F);
         int green = (int) ((Mth.sin(pulse + 2.0F) + 1.0F) * 0.35F * 255.0F) + 40;
@@ -45,6 +47,7 @@ public class LevelUpXpOrbRenderer extends EntityRenderer<LevelUpXpOrbEntity> {
         poseStack.translate(0.0F, 0.1F, 0.0F);
         poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
         poseStack.scale(0.3F, 0.3F, 0.3F);
+        // camera facing quad
         VertexConsumer consumer = buffer.getBuffer(RENDER_TYPE);
         PoseStack.Pose pose = poseStack.last();
         vertex(consumer, pose, -0.5F, -0.25F, red, green, blue, u0, v1, packedLight);

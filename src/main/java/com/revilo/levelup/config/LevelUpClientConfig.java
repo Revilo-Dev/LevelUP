@@ -19,6 +19,7 @@ public final class LevelUpClientConfig {
         public final ModConfigSpec.BooleanValue showTopCenterLevelOverlay;
         public final ModConfigSpec.BooleanValue showTemporaryLevelOverlay;
         public final ModConfigSpec.BooleanValue showInventoryLevelBar;
+        public final ModConfigSpec.BooleanValue showPlayerLevelBelowNametag;
         public final ModConfigSpec.IntValue hudLevelBarOffsetX;
         public final ModConfigSpec.IntValue hudLevelBarOffsetY;
         public final ModConfigSpec.IntValue inventoryLevelBarOffsetX;
@@ -43,6 +44,8 @@ public final class LevelUpClientConfig {
                     .define("levelHudColor", "#53a4bc", value -> value instanceof String string && isValidHexColor(string));
             showInventoryLevelBar = builder.comment("Show the LevelUP progress bar inside the inventory screen.")
                     .define("showInventoryLevelBar", true);
+            showPlayerLevelBelowNametag = builder.comment("Show a player's LevelUP level below their nametag.")
+                    .define("showPlayerLevelBelowNametag", true);
             hudLevelBarOffsetX = builder.comment("Horizontal offset for the HUD LevelUP bar in pixels.")
                     .defineInRange("hudLevelBarOffsetX", 0, -2000, 2000);
             hudLevelBarOffsetY = builder.comment("Vertical offset for the HUD LevelUP bar in pixels.")

@@ -29,6 +29,7 @@ public final class LevelBarRepositionScreen extends Screen {
     protected void init() {
         initialOffsetX = getConfigOffsetX();
         initialOffsetY = getConfigOffsetY();
+        // editable offsets
         workingOffsetX = initialOffsetX;
         workingOffsetY = initialOffsetY;
 
@@ -77,6 +78,7 @@ public final class LevelBarRepositionScreen extends Screen {
         int right = left + LevelBarRenderer.BAR_WIDTH;
         int bottom = top + LevelBarRenderer.BAR_HEIGHT;
         if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
+            // drag from preview
             dragging = true;
             dragOffsetX = (int) Math.round(mouseX) - left;
             dragOffsetY = (int) Math.round(mouseY) - top;
@@ -91,6 +93,7 @@ public final class LevelBarRepositionScreen extends Screen {
             int[] anchor = getAnchorPosition();
             int newX = (int) Math.round(mouseX) - dragOffsetX;
             int newY = (int) Math.round(mouseY) - dragOffsetY;
+            // offset from anchor
             workingOffsetX = newX - anchor[0];
             workingOffsetY = newY - anchor[1];
             saveWorkingOffsets();
@@ -114,8 +117,10 @@ public final class LevelBarRepositionScreen extends Screen {
         int baseX = (this.width - LevelBarRenderer.BAR_WIDTH) / 2;
         int baseY;
         if (target == RepositionTarget.HUD) {
+            // top hud anchor
             baseY = 18;
         } else {
+            // inventory anchor
             baseY = (this.height / 2) + 95;
         }
         return new int[]{baseX, baseY};

@@ -15,9 +15,11 @@ import net.minecraft.world.entity.player.Player;
 public final class TopCenterLevelOverlay {
     private static final ResourceLocation HUD_LAYER_ID =
             ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "top_center_level_overlay");
+    // hud layout
     private static final int TOP_MARGIN = 18;
     private static final int BOTTOM_MARGIN = 32;
     private static final int SLIDE_OFFSET = LevelBarRenderer.BAR_HEIGHT + 18;
+    // animation timing
     private static final long SLIDE_IN_MILLIS = 150L;
     private static final long SLIDE_OUT_MILLIS = 400L;
     private static final long HOLD_MILLIS = 1200L;
@@ -51,6 +53,7 @@ public final class TopCenterLevelOverlay {
         long safeNewXp = Math.max(0L, newXp);
         boolean temporaryOverlayEnabled = isTemporaryOverlayEnabled();
         if (!initialized) {
+            // first sync
             initialized = true;
             startXp = safeNewXp;
             displayedXp = safeNewXp;
@@ -63,6 +66,7 @@ public final class TopCenterLevelOverlay {
         }
 
         if (safeNewXp <= oldXp) {
+            // reset animation state
             startXp = safeNewXp;
             displayedXp = safeNewXp;
             targetXp = safeNewXp;
@@ -74,6 +78,7 @@ public final class TopCenterLevelOverlay {
         }
 
         boolean wasHidden = now >= visibleUntil;
+        // bottom hud stays current
         long currentDisplayedXp = usesBottomHud() || !temporaryOverlayEnabled ? safeNewXp : getDisplayedXp(now);
         startXp = currentDisplayedXp;
         displayedXp = currentDisplayedXp;
@@ -93,6 +98,7 @@ public final class TopCenterLevelOverlay {
             return;
         }
         long now = Util.getMillis();
+        // event supplied overlay
         customLabel = label;
         customProgress = Math.max(0.0F, Math.min(1.0F, progress));
         customVisibleUntil = Math.max(customVisibleUntil, now + Math.max(0L, durationMillis));
@@ -135,6 +141,7 @@ public final class TopCenterLevelOverlay {
         long now = Util.getMillis();
         boolean stayOnScreen = isStayOnScreenActive();
         if (lastStayOnScreen && !stayOnScreen) {
+            // delayed hide
             visibleUntil = Math.max(visibleUntil, now + SLIDE_OUT_MILLIS);
         }
         lastStayOnScreen = stayOnScreen;
@@ -144,6 +151,7 @@ public final class TopCenterLevelOverlay {
         }
 
         HudSnapshot snapshot = resolveSnapshot(now, minecraft.player);
+        // centered bar position
         int x = (minecraft.getWindow().getGuiScaledWidth() - LevelBarRenderer.BAR_WIDTH) / 2
                 + LevelUpClientConfig.CLIENT.hudLevelBarOffsetX.get();
         boolean bottomHud = usesBottomHud();
@@ -181,6 +189,7 @@ public final class TopCenterLevelOverlay {
             return displayedXp;
         }
 
+        // linear xp display
         float rawProgress = (float) (now - progressAnimationStartedAt) / (float) (progressAnimationEndsAt - progressAnimationStartedAt);
         float clampedProgress = Math.max(0.0F, Math.min(1.0F, rawProgress));
         displayedXp = startXp + Math.round((targetXp - startXp) * clampedProgress);
@@ -201,11 +210,13 @@ public final class TopCenterLevelOverlay {
             return 0;
         }
         if (now < visibleStartedAt + SLIDE_IN_MILLIS) {
+            // slide in
             float progress = (float) (now - visibleStartedAt) / (float) SLIDE_IN_MILLIS;
             float clampedProgress = Math.max(0.0F, Math.min(1.0F, progress));
             return Math.round((1.0F - clampedProgress) * -SLIDE_OFFSET);
         }
         if (now > visibleUntil - SLIDE_OUT_MILLIS) {
+            // slide out
             float progress = (float) (visibleUntil - now) / (float) SLIDE_OUT_MILLIS;
             float clampedProgress = Math.max(0.0F, Math.min(1.0F, progress));
             return Math.round((1.0F - clampedProgress) * -SLIDE_OFFSET);
@@ -236,6 +247,7 @@ public final class TopCenterLevelOverlay {
 
         boolean bottomHud = usesBottomHud();
         if (bottomHud) {
+            // live bottom value
             return new HudSnapshot(
                     LevelUpApi.getProgressToNextLevel(player),
                     bottomHud
@@ -256,6 +268,7 @@ public final class TopCenterLevelOverlay {
         int level = LevelFormula.levelForXp(xp, maxLevel);
         long currentFloor = LevelFormula.totalXpForLevel(level);
         long nextCost = Math.max(1L, LevelFormula.xpForNextLevel(level));
+        // animated top value
         float progress = (float) Math.min(1.0D, Math.max(0.0D, (double) (xp - currentFloor) / (double) nextCost));
         return new HudSnapshot(progress, Component.translatable("levelup.ui.level", level));
     }

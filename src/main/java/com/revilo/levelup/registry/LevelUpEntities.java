@@ -13,6 +13,7 @@ public final class LevelUpEntities {
     public static final DeferredRegister<EntityType<?>> REGISTER =
             DeferredRegister.create(Registries.ENTITY_TYPE, LevelUpMod.MOD_ID);
 
+    // level xp orb
     public static final Supplier<EntityType<LevelUpXpOrbEntity>> LEVEL_ORB = REGISTER.register(
             "level_orb",
             () -> EntityType.Builder.<LevelUpXpOrbEntity>of(LevelUpXpOrbEntity::new, MobCategory.MISC)

@@ -30,6 +30,7 @@ public final class LevelUpCommands {
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildRoot(String rootLiteral) {
+        // level command tree
         return Commands.literal(rootLiteral)
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("add")
@@ -132,6 +133,7 @@ public final class LevelUpCommands {
     }
 
     private static int addXp(CommandSourceStack source, ServerPlayer player, long amount) {
+        // award command xp
         long applied = LevelUpApi.addXp(player, amount, LevelUpSources.COMMAND);
         source.sendSuccess(() -> Component.literal("Added " + applied + " XP to " + player.getGameProfile().getName() + "."), true);
         return applied > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) applied;
@@ -194,6 +196,7 @@ public final class LevelUpCommands {
     }
 
     private static int query(CommandSourceStack source, ServerPlayer player) {
+        // player debug output
         source.sendSuccess(() -> Component.literal(
                 player.getGameProfile().getName()
                         + " -> level=" + LevelUpApi.getLevel(player)

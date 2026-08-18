@@ -14,10 +14,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public final class LevelUpClientApi {
+    // top hud render defaults
     private static final int TOP_HUD_LABEL_Y_OFFSET = 0;
     private static final boolean TOP_HUD_DRAW_BACKGROUND = true;
     private static final boolean TOP_HUD_DRAW_LABEL = true;
     private static final float TOP_HUD_ALPHA = 1.0F;
+    // local data listeners
     private static final CopyOnWriteArrayList<Consumer<LevelProgressDisplay>> DATA_UPDATE_LISTENERS = new CopyOnWriteArrayList<>();
 
     private LevelUpClientApi() {}
@@ -75,6 +77,7 @@ public final class LevelUpClientApi {
     public static LevelProgressDisplay getLocalLevelProgressDisplay() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) {
+            // empty client state
             return new LevelProgressDisplay(0, 0L, 0L, 0.0F);
         }
 
@@ -88,6 +91,7 @@ public final class LevelUpClientApi {
 
     public static void notifyDataUpdated() {
         LevelProgressDisplay display = getLocalLevelProgressDisplay();
+        // listener snapshot
         for (Consumer<LevelProgressDisplay> listener : DATA_UPDATE_LISTENERS) {
             listener.accept(display);
         }
@@ -149,6 +153,7 @@ public final class LevelUpClientApi {
             return 1.0F;
         }
 
+        // requirement progress
         double progress = (double) LevelUpApi.getXp(player) / (double) requiredXp;
         return (float) Math.max(0.0D, Math.min(1.0D, progress));
     }
@@ -183,6 +188,7 @@ public final class LevelUpClientApi {
     }
 
     public static float getPreviewProgressAfterXp(Player player, long xpReward) {
+        // reward preview xp
         long previewXp = Math.max(0L, LevelUpApi.getXp(player) + Math.max(0L, xpReward));
         int previewLevel = LevelUpApi.levelForTotalXp(previewXp);
         long currentFloor = LevelUpApi.getTotalXpForLevel(previewLevel);
@@ -220,11 +226,13 @@ public final class LevelUpClientApi {
     public static void appendLevelRequirementTooltip(List<Component> tooltip, Player player, int requiredLevel) {
         int currentLevel = LevelUpApi.getLevel(player);
         if (currentLevel >= requiredLevel) {
+            // met requirement
             tooltip.add(Component.translatable("levelup.tooltip.requirement_met", currentLevel, requiredLevel)
                     .withStyle(ChatFormatting.GREEN));
             return;
         }
 
+        // missing requirement
         long remainingXp = Math.max(0L, LevelUpApi.getTotalXpForLevel(requiredLevel) - LevelUpApi.getXp(player));
         tooltip.add(Component.translatable("levelup.tooltip.requires_level", requiredLevel)
                 .withStyle(ChatFormatting.RED));

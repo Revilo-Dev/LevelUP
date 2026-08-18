@@ -4,9 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.Event;
 
-/**
- * High-signal output event for cross-mod integrations when a player levels up.
- */
+// integration output event
 public class LevelUpOutputEvent extends Event {
     private final ServerPlayer player;
     private final int oldLevel;

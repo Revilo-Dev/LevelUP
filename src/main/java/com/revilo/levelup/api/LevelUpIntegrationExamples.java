@@ -9,10 +9,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 
-/**
- * Example extension points for other mods.
- * These methods are not auto-registered; copy patterns into external mods.
- */
+// example integration hooks
+// reference patterns
 @EventBusSubscriber
 public final class LevelUpIntegrationExamples {
     private LevelUpIntegrationExamples() {}
@@ -41,12 +39,12 @@ public final class LevelUpIntegrationExamples {
     }
 
     public static void onPlayerStartedStoryArc(ServerPlayer player) {
-        // Example: lock progression at level 10 until a boss objective is completed.
+        // story gate lock
         LevelUpApi.lockLevel(player, 10);
     }
 
     public static void onBossObjectiveCompleted(ServerPlayer player) {
-        // Unlock progression so leveling can continue past the cap.
+        // story gate unlock
         LevelUpApi.unlockLevel(player);
     }
 
@@ -54,20 +52,19 @@ public final class LevelUpIntegrationExamples {
     public static void onLevelUpGrantSkillPoint(LevelUpLevelChangedEvent.LevelUp event) {
         ServerPlayer player = event.getPlayer();
         int newLevel = event.getNewLevel();
-        // Example:
-        // CodexSkillsApi.addSkillPoints(player, 1);
+        // skill point bridge
+        // codex skills api add skill points
     }
 
     @SubscribeEvent
     public static void onLevelUpOutput(LevelUpOutputEvent event) {
-        // Example output payload for external mods:
-        // event.getPlayer(), event.getOldLevel(), event.getNewLevel(),
-        // event.getOldXp(), event.getNewXp(), event.getSource(), event.getLevelsGained()
+        // output payload values
+        // player old level new level old xp new xp source levels gained
     }
 
     @SubscribeEvent
     public static void onLevelLockChanged(LevelUpLevelLockChangedEvent event) {
-        // Example lock payload for external mods:
-        // event.getPlayer(), event.getOldLockedLevel(), event.getNewLockedLevel(), event.isLocked()
+        // lock payload values
+        // player old lock new lock locked state
     }
 }

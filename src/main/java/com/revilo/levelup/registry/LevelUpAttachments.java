@@ -12,6 +12,7 @@ public final class LevelUpAttachments {
     public static final DeferredRegister<AttachmentType<?>> REGISTER =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, LevelUpMod.MOD_ID);
 
+    // player progression store
     public static final Supplier<AttachmentType<PlayerProgressionData>> PLAYER_PROGRESSION = REGISTER.register(
             "player_progression",
             () -> AttachmentType.builder(PlayerProgressionData::new)

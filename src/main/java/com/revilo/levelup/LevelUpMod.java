@@ -21,6 +21,7 @@ public final class LevelUpMod {
     public static final String MOD_ID = "levelup";
 
     public LevelUpMod(IEventBus modBus, ModContainer modContainer) {
+        // common setup
         LevelUpConfig.prepareCommonConfigFile();
         LevelUpAttachments.REGISTER.register(modBus);
         LevelUpEntities.REGISTER.register(modBus);
@@ -28,10 +29,12 @@ public final class LevelUpMod {
         modBus.addListener(LevelUpNetwork::onRegisterPayloadHandlers);
         NeoForge.EVENT_BUS.addListener(LevelUpCommands::onRegisterCommands);
         if (FMLEnvironment.dist == Dist.CLIENT) {
+            // client hooks
             modBus.addListener(LevelUpClientEvents::onRegisterRenderers);
             modBus.addListener(LevelUpClientEvents::onRegisterGuiLayers);
             modContainer.registerConfig(ModConfig.Type.CLIENT, LevelUpClientConfig.SPEC, LevelUpClientConfig.CLIENT_FILE_NAME);
         }
+        // shared config
         modContainer.registerConfig(ModConfig.Type.COMMON, LevelUpConfig.SPEC, LevelUpConfig.COMMON_FILE_NAME);
     }
 }

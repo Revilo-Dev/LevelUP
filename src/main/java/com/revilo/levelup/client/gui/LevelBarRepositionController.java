@@ -24,9 +24,11 @@ public final class LevelBarRepositionController {
 
         if (pendingTarget == null) {
             if (LevelUpClientConfig.CLIENT.openHudLevelBarRepositionGui.get()) {
+                // config trigger
                 LevelUpClientConfig.CLIENT.openHudLevelBarRepositionGui.set(false);
                 requestOpenHudRepositionGui();
             } else if (LevelUpClientConfig.CLIENT.openInventoryLevelBarRepositionGui.get()) {
+                // config trigger
                 LevelUpClientConfig.CLIENT.openInventoryLevelBarRepositionGui.set(false);
                 requestOpenInventoryRepositionGui();
             }
@@ -42,6 +44,7 @@ public final class LevelBarRepositionController {
         }
 
         Screen parent = minecraft.screen;
+        // open requested editor
         minecraft.setScreen(new LevelBarRepositionScreen(parent, pendingTarget));
         pendingTarget = null;
     }

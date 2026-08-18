@@ -1,6 +1,8 @@
 package com.revilo.levelup.config;
 
 import com.revilo.levelup.registry.LevelUpTags;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
@@ -10,6 +12,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +37,7 @@ public final class LevelUpConfig {
         }
         try {
             String configText = Files.readString(configPath);
+            // old source keys
             boolean hasLegacyKeys = containsSourceKey(configText, "enable_mob_kill_xp")
                     || containsSourceKey(configText, "drop_levels_only_from_mobs_with_tag")
                     || containsSourceKey(configText, "mobKillXp");
@@ -41,6 +45,7 @@ public final class LevelUpConfig {
                 return;
             }
 
+            // source key migration
             String migrated = configText;
             migrated = appendSourceKeyFromLegacy(migrated, "mobs_drop_levels", "enable_mob_kill_xp");
             migrated = appendSourceKeyFromLegacy(migrated, "only_tagged_mobs_drop_levels", "drop_levels_only_from_mobs_with_tag");
@@ -109,6 +114,9 @@ public final class LevelUpConfig {
         public final ModConfigSpec.BooleanValue mobsDropLevels;
         public final ModConfigSpec.IntValue mobLevelDropBaseValue;
         public final ModConfigSpec.BooleanValue onlyTaggedMobsDropLevels;
+        public final ModConfigSpec.ConfigValue<List<? extends String>> mobLevelDropWhitelist;
+        public final ModConfigSpec.ConfigValue<List<? extends String>> mobLevelDropBlacklist;
+        public final ModConfigSpec.BooleanValue showLevelInTabList;
         private Common(ModConfigSpec.Builder builder) {
             builder.push("progression");
             baseXpPerLevel = builder.comment("Base XP needed at level 1.")
@@ -140,17 +148,40 @@ public final class LevelUpConfig {
                             "If both `mobs_drop_levels` and `only_tagged_mobs_drop_levels` are false, mobs never drop levels."
                     )
                     .define("only_tagged_mobs_drop_levels", false);
+            mobLevelDropWhitelist = builder.comment(
+                            "Entity type IDs allowed to drop LevelUP orbs, for example `minecraft:zombie`.",
+                            "When non-empty, only mobs in this list can drop orbs. The blacklist always takes priority."
+                    )
+                    .defineListAllowEmpty("mob_level_drop_whitelist", List.of(), () -> "minecraft:zombie", Common::isResourceLocation);
+            mobLevelDropBlacklist = builder.comment(
+                            "Entity type IDs that must never drop LevelUP orbs, for example `minecraft:creeper`.",
+                            "This list takes priority over the whitelist and other mob drop settings."
+                    )
+                    .defineListAllowEmpty("mob_level_drop_blacklist", List.of(), () -> "minecraft:creeper", Common::isResourceLocation);
+            showLevelInTabList = builder.comment("Show each player's LevelUP level in the multiplayer tab player list.")
+                    .define("show_level_in_tab_list", true);
             builder.pop();
         }
 
         public boolean shouldDropLevels(LivingEntity entity) {
+            ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+            String id = entityId.toString();
+            if (mobLevelDropBlacklist.get().contains(id)) {
+                return false;
+            }
+            List<? extends String> whitelist = mobLevelDropWhitelist.get();
+            if (!whitelist.isEmpty() && !whitelist.contains(id)) {
+                return false;
+            }
             if (isOnlyTaggedMobsDropLevelsEnabled()) {
+                // tagged mob mode
                 return entity.getType().is(LevelUpTags.DROPS_LEVELS)
                         || entity.getType().is(LevelUpTags.LEGACY_DROP_LEVELS);
             }
             if (!areMobLevelDropsEnabled()) {
                 return false;
             }
+            // hostile mob mode
             return entity instanceof Enemy;
         }
 
@@ -159,6 +190,7 @@ public final class LevelUpConfig {
             if (baseValue <= 0) {
                 return 0;
             }
+            // health scaled drops
             double scaledValue = baseValue * Math.max(1.0D, entity.getMaxHealth() / 20.0D);
             return Math.max(1, Mth.floor(scaledValue));
         }
@@ -169,6 +201,10 @@ public final class LevelUpConfig {
 
         private boolean isOnlyTaggedMobsDropLevelsEnabled() {
             return onlyTaggedMobsDropLevels.get();
+        }
+
+        private static boolean isResourceLocation(Object value) {
+            return value instanceof String id && ResourceLocation.tryParse(id) != null;
         }
     }
 }

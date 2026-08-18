@@ -26,10 +26,12 @@ public final class InventoryLevelBarRenderer {
         GuiGraphics gui = event.getGuiGraphics();
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        // absolute screen anchor
         int absoluteX = (screenWidth - LevelBarRenderer.BAR_WIDTH) / 2
                 + LevelUpClientConfig.CLIENT.inventoryLevelBarOffsetX.get();
         int absoluteY = (screenHeight / 2) + 95
                 + LevelUpClientConfig.CLIENT.inventoryLevelBarOffsetY.get();
+        // container local coords
         int x = absoluteX - screen.getGuiLeft();
         int y = absoluteY - screen.getGuiTop();
 

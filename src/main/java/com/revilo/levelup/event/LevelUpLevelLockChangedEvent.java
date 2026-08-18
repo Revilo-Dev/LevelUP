@@ -3,10 +3,8 @@ package com.revilo.levelup.event;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.Event;
 
-/**
- * Fired when a player's LevelUP lock state changes.
- * A value of -1 means unlocked (no lock cap).
- */
+// level lock event
+// minus one means unlocked
 public class LevelUpLevelLockChangedEvent extends Event {
     private final ServerPlayer player;
     private final int oldLockedLevel;

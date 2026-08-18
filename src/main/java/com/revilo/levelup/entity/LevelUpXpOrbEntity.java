@@ -27,6 +27,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public class LevelUpXpOrbEntity extends Entity {
+    // vanilla style orb rules
     private static final int LIFETIME = 6000;
     private static final int SCAN_PERIOD = 20;
     private static final int ORB_GROUPS_PER_AREA = 40;
@@ -58,6 +59,7 @@ public class LevelUpXpOrbEntity extends Entity {
     public static void award(ServerLevel level, Vec3 pos, int amount) {
         int remaining = Math.max(0, amount);
         while (remaining > 0) {
+            // split into orb values
             int split = getOrbValue(remaining);
             remaining -= split;
             if (!tryMergeToExisting(level, pos, split)) {
@@ -78,6 +80,7 @@ public class LevelUpXpOrbEntity extends Entity {
             return false;
         }
         LevelUpXpOrbEntity existing = list.getFirst();
+        // stack matching orb
         existing.count++;
         existing.age = 0;
         return true;
@@ -136,6 +139,7 @@ public class LevelUpXpOrbEntity extends Entity {
         }
 
         if (this.tickCount % SCAN_PERIOD == 1) {
+            // periodic merge scan
             this.scanForEntities();
         }
 
@@ -151,6 +155,7 @@ public class LevelUpXpOrbEntity extends Entity {
             );
             double lenSqr = delta.lengthSqr();
             if (lenSqr < FOLLOW_DISTANCE_SQR) {
+                // player attraction
                 double strength = 1.0D - Math.sqrt(lenSqr) / 8.0D;
                 this.setDeltaMovement(this.getDeltaMovement().add(delta.normalize().scale(strength * strength * 0.1D)));
             }
@@ -160,6 +165,7 @@ public class LevelUpXpOrbEntity extends Entity {
         float friction = 0.98F;
         if (this.onGround()) {
             BlockPos pos = getBlockPosBelowThatAffectsMyMovement();
+            // block friction
             friction = this.level().getBlockState(pos).getFriction(this.level(), pos, this) * 0.98F;
         }
 
@@ -234,6 +240,7 @@ public class LevelUpXpOrbEntity extends Entity {
         if (player.takeXpDelay != 0) {
             return;
         }
+        // pickup cooldown
         player.takeXpDelay = 2;
         player.take(this, 1);
         LevelUpApi.awardXp(serverPlayer, this.value, LevelUpSources.ORB_PICKUP);
@@ -263,6 +270,7 @@ public class LevelUpXpOrbEntity extends Entity {
     }
 
     public int getIcon() {
+        // value icon band
         if (this.value >= 2477) return 10;
         if (this.value >= 1237) return 9;
         if (this.value >= 617) return 8;
@@ -276,6 +284,7 @@ public class LevelUpXpOrbEntity extends Entity {
     }
 
     public static int getOrbValue(int amount) {
+        // vanilla split band
         if (amount >= 2477) return 2477;
         if (amount >= 1237) return 1237;
         if (amount >= 617) return 617;

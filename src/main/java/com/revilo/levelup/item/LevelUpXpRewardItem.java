@@ -21,6 +21,7 @@ public class LevelUpXpRewardItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, net.minecraft.world.entity.player.Player player, InteractionHand usedHand) {
         ItemStack stack = player.getItemInHand(usedHand);
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+            // server reward
             LevelUpApi.awardXp(serverPlayer, xpReward, LevelUpSources.ITEM_USE);
             player.getCooldowns().addCooldown(this, 10);
         }

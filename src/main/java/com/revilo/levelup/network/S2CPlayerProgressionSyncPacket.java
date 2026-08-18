@@ -15,6 +15,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record S2CPlayerProgressionSyncPacket(int level, long xp, int multiplier, int highestLevelReached, boolean showOverlay) implements CustomPacketPayload {
     public static final Type<S2CPlayerProgressionSyncPacket> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(LevelUpMod.MOD_ID, "sync_player_progression"));
+    // packet codec
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CPlayerProgressionSyncPacket> STREAM_CODEC =
             CustomPacketPayload.codec(S2CPlayerProgressionSyncPacket::write, S2CPlayerProgressionSyncPacket::new);
 
@@ -40,14 +41,17 @@ public record S2CPlayerProgressionSyncPacket(int level, long xp, int multiplier,
             Player player = context.player();
             PlayerProgressionData data = player.getData(LevelUpAttachments.PLAYER_PROGRESSION);
             long oldXp = data.getXp();
+            // client attachment update
             data.setLevel(payload.level());
             data.setXp(payload.xp());
             data.setMultiplier(payload.multiplier());
             data.setHighestLevelReached(payload.highestLevelReached());
             if (payload.showOverlay() && FMLEnvironment.dist == Dist.CLIENT) {
+                // hud animation hook
                 ClientHooks.onProgressionUpdated(oldXp, payload.xp());
             }
             if (FMLEnvironment.dist == Dist.CLIENT) {
+                // api listener hook
                 ClientHooks.onDataUpdated();
             }
         });
