@@ -1,49 +1,38 @@
 # eclipse
-bin/
-eclipse/
+/bin/
 *.launch
-.settings/
-.metadata/
+/.settings/
+/.metadata/
 .classpath
 .project
 
 # idea
-out/
+/out/
 *.ipr
 *.iws
 *.iml
-.idea/
+/.idea/
 
 # gradle
-build/
-.gradle/
-.gradle-cache/
+/build/
+/.gradle/
 
-# minecraft runs
-run/
-runs/
-run-data/
-logs/
-crash-reports/
-saves/
-
-# generated files
-generated/
-repo/
-classes/
-
-# local config
-local.properties
-*.env
-.env
-.env.*
-!.env.example
-
-# logs and dumps
+# runtime
+/run/
+/runs/
+/run-data/
+/logs/
+/crash-reports/
 *.log
 hs_err_pid*
 replay_pid*
 
-# system files
+# local sources
+/.tmpneoforge/
+/.tmpneoforge2/
+/.tmpneoforge3/
+/repo/
+
+# os
 .DS_Store
 Thumbs.db
