@@ -1,18 +1,16 @@
 # LevelUP Wiki
 
-`LevelUP` is a NeoForge progression framework for Minecraft `1.21.1` that adds a second, fully separate progression track on top of vanilla Minecraft.
+What the mod Does:
 
-It stores its own:
-
-- total LevelUP XP
+- stores total LevelUP XP
 - current LevelUP level
 - per-player XP multiplier
 - optional per-player level lock
 - highest level reached
 
-The mod is designed for two audiences:
+The mod is designed for:
 
-- players and pack makers who want a configurable progression system
+- creators and pack makers who want a configurable progression system
 - other mod authors who want a stable API for level-gated gameplay, custom XP rewards, progression UI, and milestone-based unlocks
 
 ## What The Mod Does
